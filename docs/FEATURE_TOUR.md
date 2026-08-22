@@ -16,7 +16,6 @@ The dashboard is a local index of the courses you import. It keeps course progre
 
 The Bilibili video plays in Syllabloom's own HTML5 player inside the course workspace. The quality menu lists the tiers Bilibili returns for your account, and switching keeps the playback position. **Scan to sign in** shows the official Bilibili QR code inside the page; scanning it with the mobile app signs you in without leaving Syllabloom. Session cookies stay in the local database — they are never displayed or uploaded — and watch progress counts toward course completion like YouTube lectures. Anonymous playback is usually capped around 480P; signed-in playback uses your own account's entitlements.
 
-The committed screenshot captures an earlier iframe-based build; re-capture this screen after signing in to show the quality menu with your own account's tiers.
 
 ## 3. Write an assignment in the browser
 
@@ -52,7 +51,7 @@ Under any lecture, paste a direct Bilibili URL containing a `BV...` identifier. 
 
 ![Public course import dialog](images/07-public-course-import-en.jpg)
 
-Import a public YouTube video or playlist through the official YouTube Data API, use a manual public-video fallback, or import a bounded public Stanford course URL. Login-gated resources are recorded as protected sources rather than fetched through an access-control boundary.
+Add a course from a pasted Bilibili link by default — multi-part videos split into one lecture per part — or import a public YouTube video or playlist through the official YouTube Data API, use a manual public-video fallback, or import a bounded public Stanford course URL. Login-gated resources are recorded as protected sources rather than fetched through an access-control boundary.
 
 ## A safe study workflow
 

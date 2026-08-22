@@ -124,6 +124,10 @@ Docker Compose 同样会从环境变量或根目录 .env 读取这些 SYLLABLOOM
 
 ## 在 Settings 中配置服务
 
+### Bilibili
+
+B 站导入开箱即用，无需任何密钥：「添加课程」默认粘贴 `BV...` 视频链接，多 P 自动拆分；播放使用内置 HTML5 播放器，清晰度菜单随账号权限变化。扫码登录的凭据只保存在本地数据库（设置接口仅显示「已配置」），媒体流经本机内存转发、不落盘。若导入时检测到课程代码（如 CS336）且本地已有对应官方课程页，官方作业会自动匹配到新课程。
+
 ### YouTube
 
 自动导入播放列表和视频元数据仅使用官方 YouTube Data API。请在自己的 Google Cloud 项目创建并合理限制 API key，再粘贴到 Settings。已知公开视频也可以使用 Manual fallback，不需要 key。

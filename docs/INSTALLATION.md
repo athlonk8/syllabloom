@@ -124,6 +124,10 @@ Docker Compose reads the same SYLLABLOOM variables from the environment or a roo
 
 ## Configure providers in Settings
 
+### Bilibili
+
+Bilibili import works out of the box — no key required. **Add a course** pastes a `BV...` video link by default and splits multi-part videos automatically; playback uses the built-in HTML5 player whose quality menu follows your account entitlements. QR sign-in credentials stay in the local database (settings responses only show "configured"), and media bytes are relayed in memory without touching disk. When an import detects a course code (for example CS336) and a matching official course page already exists locally, its assignments are matched into the new course automatically.
+
 ### YouTube
 
 Automatic playlist and video metadata comes only from the official YouTube Data API. Create and appropriately restrict an API key in your own Google Cloud project, then paste it in Settings. Manual fallback works for a known public video without a key.
