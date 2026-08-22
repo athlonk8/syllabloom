@@ -1,0 +1,28 @@
+from __future__ import annotations
+
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+
+def test_manual_course_watch_progress_survives_api_round_trip() -> None:
+    with TestClient(app) as client:
+        imported = client.post("/api/imports/manual-youtube", json={"name": "API test course", "videos": [{"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "title": "Lecture", "duration_seconds": 100}]} )
+        assert imported.status_code == 201, imported.text
+        course = imported.json()["course"]
+        video_id = course["lectures"][0]["video"]["id"]
+        watched = client.post("/api/watch/segments", json={"video_id": video_id, "start_seconds": 0, "end_seconds": 90, "playback_rate": 1, "duration_seconds": 100})
+        assert watched.status_code == 201, watched.text
+        restored = client.get(f"/api/courses/{course['id']}")
+        assert restored.status_code == 200
+        assert restored.json()["progress"]["lectures"][0]["completed"] is True
+
+
+def test_explicit_obsidian_settings_route_is_not_captured_by_generic_setting(tmp_path) -> None:
+    with TestClient(app) as client:
+        response = client.put(
+            "/api/settings/obsidian",
+            json={"vault_path": str(tmp_path / "ObsidianVault"), "create_if_missing": True},
+        )
+        assert response.status_code == 200, response.text
+        assert response.json()["enabled"] is True
