@@ -20,6 +20,7 @@ The name combines syllabus and bloom: a course plan becomes something you active
 - Runs public official tests when they are available, then optionally requests feedback from Codex CLI or an OpenAI-compatible endpoint.
 - Generates a local independent-learning certificate only when its completion rules are met.
 - Starts with English by default. Use the English · 中文 link in the lower-left sidebar to switch the UI; the choice is retained in the browser.
+- Follows the system color preference on first use, with a persistent Light/Dark switch in the sidebar footer.
 
 ## What it does not do
 

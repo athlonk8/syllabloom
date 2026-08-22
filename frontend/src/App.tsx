@@ -4,6 +4,7 @@ import { YouTubePlayer } from "./components/YouTubePlayer";
 import { api, ApiError } from "./lib/api";
 import { detectLocale, localeLink, translate, type Locale, type Translator } from "./lib/i18n";
 import { formatPercent, formatSeconds } from "./lib/format";
+import { getInitialThemePreference, persistThemePreference, resolveTheme, systemPrefersDark, type ThemePreference } from "./lib/theme";
 import type { Assignment, Course, Dashboard } from "./types/api";
 
 const PRESETS = [
@@ -444,7 +445,14 @@ function CourseWorkspace({
           </div>
           <div className="inspector-block">
             <h3>{t("course.sourcePolicy")}</h3>
-            <p>{course.course_ai_policy || t("course.noPolicy")}</p>
+            {course.course_ai_policy ? (
+              <details className="policy-details">
+                <summary>{t("course.showImportedPolicy")}</summary>
+                <p>{course.course_ai_policy}</p>
+              </details>
+            ) : (
+              <p>{t("course.noPolicy")}</p>
+            )}
             {course.official_course_url && <a href={course.official_course_url} target="_blank" rel="noreferrer">{t("course.officialPage")}</a>}
           </div>
           <div className="inspector-block">
@@ -464,18 +472,24 @@ function CourseWorkspace({
       </section>
       <section className="resource-section provenance">
         <div><p className="eyebrow">{t("course.traceability")}</p><h2>{t("course.provenance")}</h2></div>
-        <div className="resource-table">
-          {(course.resources || []).map((resource) => (
-            <div key={resource.id}>
-              <span className={resource.access_status === "protected" ? "status-warn" : "status-good"}>{resource.resource_type}</span>
-              <a href={resource.resource_url} target="_blank" rel="noreferrer">{resource.title}</a>
-              <small>{resource.access_status === "protected"
-                ? t("course.protectedResource")
-                : t("course.discoveredFrom", { source: resource.source_page_url || t("course.source") })}</small>
+        {(course.resources || []).length ? (
+          <details className="provenance-details">
+            <summary>{t("course.showResources", { count: course.resources?.length || 0 })}</summary>
+            <div className="resource-table">
+              {course.resources?.map((resource) => (
+                <div key={resource.id}>
+                  <span className={resource.access_status === "protected" ? "status-warn" : "status-good"}>{resource.resource_type}</span>
+                  <a href={resource.resource_url} target="_blank" rel="noreferrer">{resource.title}</a>
+                  <small>{resource.access_status === "protected"
+                    ? t("course.protectedResource")
+                    : t("course.discoveredFrom", { source: resource.source_page_url || t("course.source") })}</small>
+                </div>
+              ))}
             </div>
-          ))}
-          {!(course.resources || []).length && <p className="empty-note">{t("course.noResources")}</p>}
-        </div>
+          </details>
+        ) : (
+          <p className="empty-note">{t("course.noResources")}</p>
+        )}
       </section>
     </main>
   );
@@ -483,6 +497,8 @@ function CourseWorkspace({
 
 export default function App() {
   const [locale, setLocale] = useState<Locale>(detectLocale);
+  const [themePreference, setThemePreference] = useState<ThemePreference>(getInitialThemePreference);
+  const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [showImport, setShowImport] = useState(false);
@@ -490,6 +506,7 @@ export default function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const t = useCallback<Translator>((key, values) => translate(locale, key, values), [locale]);
+  const resolvedTheme = resolveTheme(themePreference, prefersDark);
 
   useEffect(() => {
     document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
@@ -500,6 +517,21 @@ export default function App() {
       // Local storage is optional; the query-string language links still work.
     }
   }, [locale]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const update = (event: MediaQueryListEvent) => setPrefersDark(event.matches);
+    setPrefersDark(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.style.colorScheme = resolvedTheme;
+    persistThemePreference(themePreference);
+  }, [resolvedTheme, themePreference]);
 
   const refreshDashboard = async () => {
     const data = await api<Dashboard>("/dashboard");
@@ -544,6 +576,10 @@ export default function App() {
     setLocale(nextLocale);
   };
 
+  const toggleTheme = () => {
+    setThemePreference(resolvedTheme === "dark" ? "light" : "dark");
+  };
+
   if (loading) {
     return <div className="loading-screen"><div className="orbit" /><p>{t("app.loading")}</p></div>;
   }
@@ -568,6 +604,19 @@ export default function App() {
         <div className="sidebar-footer">
           <button className="nav-item" onClick={() => setShowSettings(true)}>{t("nav.settings")}</button>
           <p>{t("nav.localFirst")}</p>
+          <div className="theme-switcher" aria-label={t("theme.label")}>
+            <span>{t("theme.label")}</span>
+            <button
+              className="theme-toggle"
+              type="button"
+              aria-label={t(resolvedTheme === "dark" ? "theme.switchToLight" : "theme.switchToDark")}
+              aria-pressed={resolvedTheme === "dark"}
+              onClick={toggleTheme}
+            >
+              <span aria-hidden="true">{resolvedTheme === "dark" ? "☾" : "☀"}</span>
+              {t(resolvedTheme === "dark" ? "theme.dark" : "theme.light")}
+            </button>
+          </div>
           <div className="language-switcher" aria-label={t("language.label")}>
             <a href={localeLink("en")} className={locale === "en" ? "active" : ""} onClick={(event) => { event.preventDefault(); changeLocale("en"); }}>English</a>
             <span aria-hidden="true">·</span>

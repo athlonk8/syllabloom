@@ -101,6 +101,8 @@ The certificate is not university-issued, accredited, sponsored, or endorsed. It
 
 English is the first-run language. Use English or 中文 in the sidebar footer at any time. Course titles, source descriptions, and material provided by external sites are retained as supplied; changing the UI language does not translate third-party course content.
 
+The interface follows your system color preference on first use. Use the Theme control in the sidebar footer to choose Light or Dark; the browser remembers an explicit selection.
+
 The language controls are real links with a lang query parameter, so a saved or shared URL can request a language directly.
 
 ## Keep a healthy local record

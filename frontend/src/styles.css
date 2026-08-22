@@ -2,6 +2,7 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #dce8f7;
   background: #07111f;
+  color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -36,6 +37,9 @@ a:hover { text-decoration: underline; }
 .language-switcher a { color: #82bcca; text-decoration: none; }
 .language-switcher a:hover { color: #c9f3fb; text-decoration: none; }
 .language-switcher a.active { color: #e8fbff; font-weight: 750; }
+.theme-switcher { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px 0; color: #8ba3bd; font-size: 12px; }
+.theme-toggle { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #31506f; border-radius: 999px; padding: 5px 9px; background: #11243a; color: #d8effb; font-size: 11px; font-weight: 700; }
+.theme-toggle:hover { background: #19344f; }
 .app-content { min-width: 0; }
 .loading-screen { min-height: 100vh; display: grid; place-content: center; gap: 20px; color: #bcd0e3; text-align: center; }
 .orbit { width: 46px; height: 46px; margin: auto; border: 3px solid #284662; border-top-color: #79dae2; border-radius: 50%; animation: spin .8s linear infinite; }
@@ -85,6 +89,96 @@ a:hover { text-decoration: underline; }
 
 .toast { position: fixed; z-index: 4; right: 24px; top: 20px; display: flex; gap: 18px; align-items: center; max-width: 520px; border: 1px solid #517e98; border-radius: 9px; padding: 12px 14px; background: #123049; color: #ddf7ff; text-align: left; box-shadow: 0 14px 38px rgba(0, 0, 0, .35); }.toast span { color: #8bcfda; font-size: 18px; }
 .modal-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(0, 9, 20, .72); backdrop-filter: blur(6px); }.modal { position: relative; width: min(560px, 100%); max-height: calc(100vh - 40px); overflow: auto; border: 1px solid #41637f; border-radius: 15px; padding: 28px; background: #0d2238; box-shadow: 0 30px 90px rgba(0, 0, 0, .58); }.modal h2 { margin: 0 0 6px; color: #effaff; }.close { position: absolute; right: 14px; top: 13px; border: 0; background: transparent; color: #9db6ca; font-size: 27px; }.modal label { display: grid; gap: 6px; margin: 16px 0; color: #bad1e3; font-size: 12px; font-weight: 700; }.modal input, .modal select { width: 100%; border: 1px solid #365a75; border-radius: 8px; padding: 11px; background: #081727; color: #e6f5ff; }.provider-fields { margin-top: -5px; padding: 1px 14px 11px; border: 1px solid #294b66; border-radius: 9px; background: rgba(8, 23, 39, .44); }.modal .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-weight: 500; }.modal .checkbox-row input { width: auto; accent-color: #72dbe2; }.segmented { display: flex; margin: 22px 0 3px; border: 1px solid #355774; border-radius: 8px; overflow: hidden; }.segmented button { flex: 1; border: 0; border-right: 1px solid #355774; padding: 9px 6px; background: #10263e; color: #93afc4; font-size: 12px; }.segmented button:last-child { border: 0; }.segmented button.selected { background: #2a536e; color: #e9fbff; }.hint { color: #7f9bb3; font-size: 12px; line-height: 1.5; }.inline-error { color: #ffb5a7; font-size: 13px; line-height: 1.5; }.notice { color: #91ead6; font-size: 13px; }.preset-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 19px; padding-top: 14px; border-top: 1px solid #294862; }.preset-list span { width: 100%; font-size: 11px; }.preset-list button { border: 0; padding: 3px 0; background: transparent; color: #78d6df; font-size: 11px; text-align: left; }.settings-modal { width: min(510px, 100%); }.codex-status { display: flex; justify-content: space-between; align-items: center; margin: 19px 0; padding: 11px; border: 1px solid #2c4c67; border-radius: 8px; background: #0a1c2e; font-size: 12px; }.codex-status span { max-width: 70%; font-size: 11px; overflow-wrap: anywhere; }
+
+:root[data-theme="light"] { color: #183047; background: #f5f8fc; color-scheme: light; }
+:root[data-theme="light"] body { background: radial-gradient(circle at 84% -15%, #d8edff 0, transparent 30rem), #f5f8fc; }
+:root[data-theme="light"] a { color: #086c86; }
+:root[data-theme="light"] .sidebar { background: rgba(250, 253, 255, .92); border-color: #cad9e6; }
+:root[data-theme="light"] .brand { color: #13314b; }
+:root[data-theme="light"] :is(.brand span, .nav-label, .sidebar-footer p) { color: #5c758a; }
+:root[data-theme="light"] .nav-item { color: #405d74; }
+:root[data-theme="light"] .nav-item:hover,
+:root[data-theme="light"] .nav-item.active { background: #e6f0f7; color: #153852; }
+:root[data-theme="light"] .nav-item small { color: #087c8c; }
+:root[data-theme="light"] .language-switcher { color: #5c758a; }
+:root[data-theme="light"] .language-switcher a { color: #357088; }
+:root[data-theme="light"] .language-switcher a:hover,
+:root[data-theme="light"] .language-switcher a.active { color: #123d5a; }
+:root[data-theme="light"] .theme-switcher { color: #536d82; }
+:root[data-theme="light"] .theme-toggle { border-color: #b8cfdf; background: #f1f7fb; color: #294f68; }
+:root[data-theme="light"] .theme-toggle:hover { background: #e3f0f7; }
+:root[data-theme="light"] .loading-screen { color: #49657a; }
+:root[data-theme="light"] .orbit { border-color: #c4d8e6; border-top-color: #1598a9; }
+:root[data-theme="light"] .eyebrow { color: #087d91; }
+:root[data-theme="light"] :is(.dashboard h1, .course-header h1, .section-heading h2, .resource-section h2, .empty-card h2, .empty-card h3, .empty-player h3, .principles h3, .lecture-context h2, .assignment-heading h4) { color: #17334c; }
+:root[data-theme="light"] :is(.lede, .muted, .course-card p, .principles p, .lecture-context p, .inspector-block p, .assignment-card > p, .resource-table small, .empty-note) { color: #587287; }
+:root[data-theme="light"] :is(.metrics, .course-card, .empty-card, .empty-player, .lecture-list, .course-inspector, .assignment-card, .resource-table, .modal, .codex-status) { border-color: #c4d6e3; }
+:root[data-theme="light"] .metrics { background: rgba(255, 255, 255, .7); }
+:root[data-theme="light"] .metrics div { border-color: #d5e2eb; }
+:root[data-theme="light"] :is(.metrics span, .metrics small, .section-title, .lecture-item small, .progress-card span, .progress-card small) { color: #617b8f; }
+:root[data-theme="light"] :is(.metrics strong, .progress-card strong) { color: #1b3952; }
+:root[data-theme="light"] :is(.section-heading > button, .header-actions > button, .button-row button, .text-button) { border-color: #b8cfdf; background: #f3f8fb; color: #2d5871; }
+:root[data-theme="light"] :is(.section-heading > button:hover, .header-actions > button:hover, .button-row button:hover, .text-button:hover) { background: #e4f0f7; }
+:root[data-theme="light"] .course-card { background: linear-gradient(150deg, #ffffff, #edf5fa); color: #193a54; }
+:root[data-theme="light"] .course-card:hover { border-color: #4aa5b3; }
+:root[data-theme="light"] .course-card small { color: #52728a; }
+:root[data-theme="light"] .tag { border-color: #9ec7d4; color: #087a8d; }
+:root[data-theme="light"] .progress-ring { background: conic-gradient(#25a9b5 var(--progress), #d5e4ed 0); color: #17445f; text-shadow: none; }
+:root[data-theme="light"] .progress-ring::before { background: #f8fcfe; }
+:root[data-theme="light"] :is(.empty-card, .empty-player) { background: rgba(255, 255, 255, .68); color: #4f6c81; }
+:root[data-theme="light"] .principles div { border-color: #c6d9e5; }
+:root[data-theme="light"] .principles strong { color: #09899a; }
+:root[data-theme="light"] :is(.lecture-list, .course-inspector) { background: rgba(255, 255, 255, .72); }
+:root[data-theme="light"] .section-title { border-color: #d0e0ea; }
+:root[data-theme="light"] .section-title b { color: #098092; }
+:root[data-theme="light"] .lecture-item { border-color: #d8e4ec; color: #426176; }
+:root[data-theme="light"] .lecture-item:hover,
+:root[data-theme="light"] .lecture-item.active { background: #e8f3f8; color: #173850; }
+:root[data-theme="light"] .check { border-color: #a5c2d3; color: #54758b; }
+:root[data-theme="light"] .check.done { border-color: #32a98e; background: #e1f6ef; color: #137861; }
+:root[data-theme="light"] .player-shell { border-color: #b9cfdd; background: #09131b; box-shadow: 0 18px 45px rgba(31, 70, 97, .14); }
+:root[data-theme="light"] .player-meta { background: #edf5f9; color: #35566d; }
+:root[data-theme="light"] .lecture-context { border-color: #d6e3eb; }
+:root[data-theme="light"] .course-inspector :is(.progress-card, .inspector-block) { border-color: #d4e1ea; }
+:root[data-theme="light"] .inspector-block h3 { color: #2f5168; }
+:root[data-theme="light"] .assignment-card { background: rgba(255, 255, 255, .76); }
+:root[data-theme="light"] .assignment-status { background: #e7eef4; color: #456178; }
+:root[data-theme="light"] .assignment-status.passed { background: #dff3ed; color: #147860; }
+:root[data-theme="light"] .assignment-status.needs_revision { background: #fff0e7; color: #a44b25; }
+:root[data-theme="light"] .acknowledgement { color: #536f83; }
+:root[data-theme="light"] .grading-history { border-color: #d5e2ea; color: #4e6c82; }
+:root[data-theme="light"] .protected { color: #a34a25 !important; }
+:root[data-theme="light"] .resource-table { background: #cbdce7; }
+:root[data-theme="light"] .resource-table > div { background: #f9fcfe; }
+:root[data-theme="light"] .status-good { color: #08735e; background: #dcf3eb; }
+:root[data-theme="light"] .status-warn { color: #a14420; background: #ffede2; }
+:root[data-theme="light"] .resource-table a { color: #1c536f; }
+:root[data-theme="light"] .toast { border-color: #8fb4c9; background: #e7f4fb; color: #204b65; box-shadow: 0 14px 38px rgba(31, 70, 97, .2); }
+:root[data-theme="light"] .toast span { color: #167a8d; }
+:root[data-theme="light"] .modal { border-color: #a9c4d5; background: #f8fcff; box-shadow: 0 30px 90px rgba(31, 70, 97, .3); }
+:root[data-theme="light"] .modal h2 { color: #18364f; }
+:root[data-theme="light"] .close { color: #5a7489; }
+:root[data-theme="light"] .modal label { color: #3e6076; }
+:root[data-theme="light"] .modal input,
+:root[data-theme="light"] .modal select { border-color: #abc6d6; background: #ffffff; color: #1c3c54; }
+:root[data-theme="light"] .provider-fields { border-color: #c7dbe6; background: #eef6fa; }
+:root[data-theme="light"] .segmented { border-color: #b8cfde; }
+:root[data-theme="light"] .segmented button { border-color: #b8cfde; background: #f1f7fb; color: #557186; }
+:root[data-theme="light"] .segmented button.selected { background: #cde8f1; color: #17485f; }
+:root[data-theme="light"] .hint { color: #587287; }
+:root[data-theme="light"] .inline-error { color: #ad402b; }
+:root[data-theme="light"] .notice { color: #087765; }
+:root[data-theme="light"] .preset-list { border-color: #d2e1ea; }
+:root[data-theme="light"] .preset-list button { color: #08798b; }
+:root[data-theme="light"] .codex-status { background: #eef6fa; }
+
+.policy-details { margin: 0; }
+.policy-details summary { color: #80d7e2; cursor: pointer; font-size: 12px; font-weight: 700; }
+.policy-details p { margin: 10px 0 0; }
+:root[data-theme="light"] .policy-details summary { color: #087d91; }
+.provenance-details { margin-top: 16px; }
+.provenance-details summary { color: #80d7e2; cursor: pointer; font-size: 13px; font-weight: 700; }
+:root[data-theme="light"] .provenance-details summary { color: #087d91; }
 
 @media (max-width: 1120px) { .course-layout { grid-template-columns: 230px minmax(0, 1fr); }.course-inspector { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }.progress-card, .inspector-block { border-bottom: 0; border-right: 1px solid #28435d; padding: 6px 14px 6px 0; }.inspector-block:last-child { border-right: 0; }.metrics { grid-template-columns: repeat(2, 1fr); }.metrics div:nth-child(2) { border-right: 0; }.metrics div:nth-child(-n+2) { border-bottom: 1px solid #243e58; } }
 @media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: static; height: auto; padding: 13px; border-right: 0; border-bottom: 1px solid #29435d; }.brand { padding-bottom: 14px; }.add-course { margin-bottom: 10px; }.sidebar nav { display: none; }.sidebar-footer { display: block; margin: 0; padding-top: 0; }.sidebar-footer > .nav-item, .sidebar-footer > p { display: none; }.language-switcher { padding: 7px 10px 0; }.dashboard, .workspace { padding: 27px 18px 55px; }.metrics, .principles { grid-template-columns: 1fr; }.metrics div, .metrics div:nth-child(2) { border-right: 0; border-bottom: 1px solid #243e58; }.metrics div:last-child { border-bottom: 0; }.course-header, .section-heading, .lecture-context { display: block; }.header-actions { justify-content: flex-start; margin-top: 15px; }.course-layout { grid-template-columns: 1fr; }.lecture-list { max-height: 265px; overflow: auto; }.course-inspector { display: block; }.progress-card, .inspector-block { border-right: 0; border-bottom: 1px solid #28435d; padding: 15px 0; }.course-inspector .inspector-block:last-child { border: 0; }.player-error { margin-left: 0; }.player-meta { align-items: flex-start; flex-wrap: wrap; }.principles { margin-top: 40px; }.toast { right: 15px; left: 15px; top: 12px; }.modal { padding: 24px 19px; } }
