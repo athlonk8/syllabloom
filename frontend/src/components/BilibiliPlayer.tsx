@@ -10,7 +10,6 @@ export function BilibiliPlayer({ lecture, locale, courseId }: { lecture: Lecture
   const [returnedFromLogin, setReturnedFromLogin] = useState(false);
   const shellRef = useRef<HTMLElement>(null);
   const embedUrl = lecture.video?.embed_url;
-  const sourceUrl = lecture.source_url || `https://www.bilibili.com/video/${lecture.video?.external_id || ""}/`;
   const playerId = `bilibili-player-${lecture.id}`;
 
   const refreshPlayer = useCallback(() => {
@@ -84,6 +83,7 @@ export function BilibiliPlayer({ lecture, locale, courseId }: { lecture: Lecture
             title={lecture.title}
             allow="autoplay; fullscreen; picture-in-picture"
             allowFullScreen
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
             referrerPolicy="strict-origin-when-cross-origin"
             onLoad={() => setFailed(false)}
             onError={() => setFailed(true)}
@@ -103,11 +103,11 @@ export function BilibiliPlayer({ lecture, locale, courseId }: { lecture: Lecture
         <div>
           <strong>{translate(locale, "player.bilibiliHdTitle")}</strong>
           <span aria-live="polite">{translate(locale, returnedFromLogin ? "player.bilibiliReturnDetected" : "player.bilibiliHdHint")}</span>
+          <span className="bilibili-in-page-status">{translate(locale, "player.bilibiliInPageOnly")}</span>
         </div>
         <div className="bilibili-control-actions">
           <button type="button" onClick={openLogin}>{translate(locale, "player.bilibiliLogin")}</button>
           <button type="button" onClick={refreshPlayer}>{translate(locale, "player.bilibiliRefresh")}</button>
-          <button type="button" onClick={() => window.open(sourceUrl, "_blank", "noopener,noreferrer")}>{translate(locale, "player.bilibiliOpen")}</button>
           <button type="button" onClick={() => void toggleFullscreen()}>{translate(locale, fullscreen ? "player.exitFullscreen" : "player.fullscreen")}</button>
         </div>
       </div>

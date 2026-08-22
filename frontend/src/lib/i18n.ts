@@ -216,7 +216,6 @@ const messages: Record<Locale, Record<string, string>> = {
     "player.bilibiliLoginRefreshHint": "Finish sign-in in the Bilibili tab, then use Refresh player. Syllabloom never receives your Bilibili password or cookies.",
     "player.bilibiliLogin": "Sign in to Bilibili",
     "player.bilibiliRefresh": "Refresh player",
-    "player.bilibiliOpen": "Open HD on Bilibili",
     "player.fullscreen": "Full screen",
     "player.exitFullscreen": "Exit full screen",
   },
@@ -438,24 +437,27 @@ Object.assign(messages.zh, {
   "player.bilibiliLoginRefreshHint": "请在 B 站标签页完成登录后点击“刷新播放器”。Syllabloom 不会接收你的密码或 Cookie。",
   "player.bilibiliLogin": "登录 B 站",
   "player.bilibiliRefresh": "刷新播放器",
-  "player.bilibiliOpen": "在 B 站高清播放",
   "player.fullscreen": "全屏",
   "player.exitFullscreen": "退出全屏",
 });
 
 Object.assign(messages.en, {
-  "player.bilibiliHdHint": "Sign in with Bilibili in this tab. When sign-in finishes, Bilibili returns to this exact course and Syllabloom reloads the in-page player.",
+  "player.bilibiliHdTitle": "Keep Bilibili playback in this page",
+  "player.bilibiliHdHint": "Sign in with Bilibili in this tab. When sign-in finishes, Bilibili returns to this exact course and Syllabloom reloads the embedded player.",
   "player.bilibiliReturnDetected": "Bilibili sign-in return detected — the in-page player has been reloaded.",
   "player.bilibiliLogin": "Sign in and return to player",
-  "player.bilibiliRefresh": "I have signed in — reload player",
+  "player.bilibiliRefresh": "Reload in-page player",
+  "player.bilibiliInPageOnly": "External Bilibili playback is disabled here.",
   "player.fullscreenUnavailable": "Full screen was blocked by this browser",
 });
 
 Object.assign(messages.zh, {
+  "player.bilibiliHdTitle": "始终在本页面播放 B 站视频",
   "player.bilibiliHdHint": "在当前标签页登录 B 站。登录完成后会自动回到当前课程，Syllabloom 会重新加载页面内播放器。",
   "player.bilibiliReturnDetected": "已检测到 B 站登录回跳，页面内播放器已重新加载。",
   "player.bilibiliLogin": "登录后返回播放器",
-  "player.bilibiliRefresh": "我已登录，重新加载播放器",
+  "player.bilibiliRefresh": "重新加载页面内播放器",
+  "player.bilibiliInPageOnly": "此处已禁用跳转到 B 站站外播放。",
   "player.fullscreenUnavailable": "当前浏览器阻止了全屏",
 });
 

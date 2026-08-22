@@ -16,7 +16,7 @@ The dashboard is a local index of the courses you import. It keeps course progre
 
 The Bilibili video remains inside the course workspace. **Sign in and return to player** opens Bilibili's first-party sign-in page in the current tab. Its return target includes the current course and lecture, so after a successful Bilibili sign-in it returns to this exact course, scrolls back to the player, removes the one-time return parameters from the URL, and reloads the in-page iframe. Syllabloom never reads a Bilibili password, QR code, or cookie.
 
-The screenshot exercises that post-login return path locally; no Bilibili account was used to produce it. Bilibili still decides the quality choices that an account and a specific video can use. **Open HD on Bilibili** remains an explicit fallback when a browser blocks third-party cookies or Bilibili restricts the embedded player.
+The screenshot exercises that post-login return path locally; no Bilibili account was used to produce it. Bilibili still decides the quality choices that an account and a specific video can use. Syllabloom deliberately does not offer an external Bilibili-playback button: the iframe is sandboxed without popup or top-navigation permission, so it cannot take the surrounding learning page away from the course. If Bilibili's own player shows a “watch in Bilibili” prompt for a quality it declines to serve in an embed, that provider decision remains visible but cannot navigate the outer course page.
 
 ## 3. Write an assignment in the browser
 
