@@ -69,8 +69,20 @@ class OfficialAssignmentResolver:
         return AssignmentDecision(is_assignment, label or "Official assignment resource", resource_type, protected, official, rationale)
 
 
-def assignment_key(label: str, index: int) -> str:
-    match = re.search(r"\b(?:assignment|homework|hw|pset|problem\s*set)\s*([a-z0-9._-]+)", label, re.I)
+def assignment_key(label: str, index: int, source_url: str | None = None) -> str:
+    """Derive a stable assignment key from the visible label or its official URL.
+
+    Public course pages often link a repository once as ``Assignment 1`` and
+    later as ``preview`` or ``starter code``. The latter has no assignment
+    number in its label, but the repository path commonly does. Grouping by
+    that number keeps one assignment card with multiple official resources.
+    """
+    source = " ".join(part for part in [label, source_url or ""] if part)
+    match = re.search(
+        r"\b(?:assignment|homework|hw|pset|problem[\s/_-]*set)[\s/_-]*(\d+[a-z]?)\b",
+        source,
+        re.I,
+    )
     if match:
         return f"A{match.group(1).upper()}".replace(" ", "")[:90]
     return f"A{index}"

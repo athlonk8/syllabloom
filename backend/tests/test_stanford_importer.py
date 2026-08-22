@@ -70,3 +70,44 @@ def test_protected_link_is_recorded_but_not_followed(db, monkeypatch) -> None:
     protected = [resource for resource in course.resources if resource.protected_resource]
     assert protected
     assert protected[0].access_status == "protected"
+
+
+def test_assignment_preview_links_are_grouped_with_their_official_assignment(db, monkeypatch) -> None:
+    monkeypatch.setattr("app.services.stanford.time.sleep", lambda _: None)
+    root = "https://cs336.stanford.edu/"
+    pages = {
+        root: """
+            <html><body>
+              <h1>CS336: Language Modeling from Scratch</h1>
+              <p>Spring 2026</p>
+              <a href="https://github.com/stanford-cs336/assignment1-basics/tree/main">Assignment 1: Basics</a>
+              <a href="https://github.com/stanford-cs336/assignment1-basics/blob/main/README.md">preview</a>
+            </body></html>
+        """,
+    }
+
+    course, _ = FixtureImporter(db, pages).import_url(root, max_pages=1, max_depth=0)
+
+    assert len(course.assignments) == 1
+    assert course.assignments[0].key == "A1"
+    assert course.assignments[0].title == "Assignment 1: Basics"
+    assert len(course.assignments[0].resources) == 2
+
+
+def test_same_public_video_can_belong_to_two_imported_courses(db, monkeypatch) -> None:
+    monkeypatch.setattr("app.services.stanford.time.sleep", lambda _: None)
+    first_root = "https://cs336.stanford.edu/"
+    second_root = "https://web.stanford.edu/class/cs224n/"
+    course_html = """
+        <html><body>
+          <h1>Public Stanford course</h1>
+          <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Lecture recording</a>
+        </body></html>
+    """
+    importer = FixtureImporter(db, {first_root: course_html, second_root: course_html})
+
+    first, _ = importer.import_url(first_root, max_pages=1, max_depth=0)
+    second, _ = importer.import_url(second_root, max_pages=1, max_depth=0)
+
+    assert len(first.lectures) == 1
+    assert len(second.lectures) == 1

@@ -352,7 +352,7 @@ class StanfordGenericImporter:
         for link in parsed.links:
             self._ingest_link(course, module, page_url, link)
         for video_id in parsed.youtube_embeds:
-            if self.db.scalar(select(Video).where(Video.external_id == video_id, Video.provider == "youtube")):
+            if self._has_course_video(course, video_id):
                 continue
             lecture = Lecture(
                 course_id=course.id,
@@ -379,7 +379,7 @@ class StanfordGenericImporter:
         )
         youtube_id = extract_youtube_video_id(link.url)
         if youtube_id and LECTURE_RE.search(combined):
-            if not self.db.scalar(select(Video).where(Video.external_id == youtube_id, Video.provider == "youtube")):
+            if not self._has_course_video(course, youtube_id):
                 lecture = Lecture(
                     course_id=course.id,
                     module_id=module.id,
@@ -461,7 +461,7 @@ class StanfordGenericImporter:
         assignment_count = self.db.scalar(
             select(func.count()).select_from(Assignment).where(Assignment.course_id == course.id)
         ) or 0
-        candidate = assignment_key(link.label, assignment_count + 1)
+        candidate = assignment_key(link.label, assignment_count + 1, link.url)
         assignment = self.db.scalar(select(Assignment).where(Assignment.course_id == course.id, Assignment.key == candidate))
         if assignment is not None:
             return assignment
@@ -484,3 +484,14 @@ class StanfordGenericImporter:
     def _next_lecture_order(self, course: Course) -> int:
         maximum = self.db.scalar(select(func.max(Lecture.order_index)).where(Lecture.course_id == course.id))
         return (maximum or 0) + 1
+
+    def _has_course_video(self, course: Course, external_id: str) -> bool:
+        return self.db.scalar(
+            select(Video.id)
+            .join(Lecture)
+            .where(
+                Lecture.course_id == course.id,
+                Video.provider == "youtube",
+                Video.external_id == external_id,
+            )
+        ) is not None
