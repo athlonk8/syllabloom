@@ -5,7 +5,7 @@
 - Added an in-browser assignment workbench with local Markdown drafts, immutable submission versions, full feedback history, and detailed structured results from the learner-configured Codex/AI provider.
 - Added a Bilibili first-party sign-in return flow that restores the same course and automatically reloads the in-page iframe, plus manual refresh and in-page fullscreen controls without collecting account credentials or cookies.
 - Removed the external Bilibili playback control and sandboxed the official iframe so player actions cannot navigate the surrounding Syllabloom page or open a popup.
-- Allowed the sandboxed Bilibili iframe to make a user-activated storage-access request and use encrypted media, so account-bound quality options can work without re-enabling external navigation.
+- Verified that Bilibili's official external player can decline a 720p choice for the CS336 source even when the full Bilibili page plays 720p; Syllabloom preserves in-page playback and does not attempt to bypass that provider limitation.
 - Added an annotated English/Chinese screenshot tour for the core local learning, Bilibili, assignment, and configuration workflows.
 - Added a persistent, system-aware Light/Dark theme switcher and compact expandable imported-policy/source panels.
 - Renamed the project to Syllabloom and added an English-first interface with a Chinese language link.

@@ -26,7 +26,8 @@ The local UI was exercised at `http://127.0.0.1:8000` with the imported CS336 Bi
 - The Bilibili iframe remained inside the course page.
 - A simulated post-login return URL selected the same course and lecture, removed the one-time `bilibili_login` and `bilibili_lecture` parameters, scrolled to the embedded player, and re-mounted the iframe.
 - The language links retained the selected course but did not retain the one-time sign-in parameters.
-- The official Bilibili iframe is rendered with a sandbox that excludes popup and top-navigation permission, but permits a user-activated storage-access request for the signed-in Bilibili session; the UI exposes no app-owned external-playback button.
+- The official Bilibili iframe is rendered with a sandbox that excludes popup and top-navigation permission; the UI exposes no app-owned external-playback button.
+- The same CS336 Bilibili video remained at 360p after a 720p choice both in Syllabloom and in Bilibili's own external player, while the full Bilibili video page reported 720p. This confirms an external-player limitation rather than an app-controlled quality switch.
 - The in-page fullscreen control was exercised. The validation browser declined its Fullscreen API request, and the UI correctly reported that browser limitation without treating the embed itself as unavailable.
 - Eight credential-free local UI captures are committed in [the feature tour](FEATURE_TOUR.md).
 
