@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Iterator
@@ -46,6 +47,49 @@ MIXIN_KEY_ENC_TAB = [
     61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59, 6, 63, 57, 62, 11,
     36, 20, 34, 44, 52,
 ]
+
+# ---------------------------------------------------------------------------
+# Uploader title hygiene.  Bilibili reposts stack separator spam ("|大模型|
+# 深度学习|…"), bracketed meta ("(中英字幕完结)", "【搬运】") and clickbait
+# tails ("草履虫看了都能学会!") onto the real series name.  Strip them so a
+# learner's library does not fill with junk.
+
+SEPARATOR_SPAM = re.compile(r"\s*[|｜丨]\s*")
+BRACKET_META = re.compile(
+    r"[（(][^（）()]{0,30}?(?:完结|字幕|搬运|转载|全集|持续更新|合集|修复|熟肉)[^（）()]{0,30}?[）)]"
+    r"|【[^】]{0,24}】"
+)
+CLICKBAIT = re.compile(
+    r"(?:草履虫|小白|零基础|保姆级|手把手|都能学会|包会|一学就会|学不会|看完就会|看这[一集]个?就?够)"
+)
+EPISODE_PREFIX = re.compile(r"^\d{1,3}\s*[.、:：\-—]\s*")
+TRIM_CHARS = " 　\t\r\n，。,;；!！?？：:·…-—_~"
+
+
+def clean_series_title(raw: str) -> str:
+    """Return the meaningful head of an uploader-styled series title."""
+    text = (raw or "").strip()
+    if not text:
+        return text
+    text = SEPARATOR_SPAM.split(text, maxsplit=1)[0]
+    while True:
+        stripped = BRACKET_META.sub("", text).strip(TRIM_CHARS)
+        if stripped == text:
+            break
+        text = stripped
+    match = CLICKBAIT.search(text)
+    if match and match.start() >= 8:
+        text = text[: match.start()]
+    text = text.strip(TRIM_CHARS)
+    return text or raw.strip()[:120]
+
+
+def clean_part_title(raw: str, index: int) -> str:
+    """Return the per-episode label from an uploader-styled part title."""
+    text = clean_series_title(raw)
+    segments = [segment.strip(TRIM_CHARS) for segment in re.split(r"\s+[-—–]\s+", text)]
+    candidate = EPISODE_PREFIX.sub("", segments[-1]).strip(TRIM_CHARS) if segments else ""
+    return candidate or f"P{index}"
 
 QR_POLL_STATUS = {
     0: "confirmed",
@@ -317,9 +361,9 @@ class BilibiliService:
             raise BilibiliError("This is not a direct Bilibili BV video URL.")
         info = self.video_info(bvid)
         pages = info["pages"] or [{"page": 1, "cid": None, "part": info["title"], "duration_seconds": None}]
-
+        series_title = clean_series_title(info["title"]) or bvid
         course = Course(
-            name=(name or info["title"]).strip()[:300] or bvid,
+            name=(name or series_title).strip()[:300] or bvid,
             official_course_url=bilibili_video_url(bvid),
             source_type="bilibili_manual",
             import_status="ready",
@@ -344,11 +388,12 @@ class BilibiliService:
         for index, page in enumerate(pages, start=1):
             page_number = int(page.get("page") or index)
             suffix = "" if page_number <= 1 else f"?p={page_number}"
-            part_title = str(page.get("part") or "").strip() or f"P{page_number}"
+            raw_part = str(page.get("part") or "")
+            part_title = clean_part_title(raw_part, page_number) if len(pages) > 1 else series_title
             lecture = Lecture(
                 course_id=course.id,
                 module_id=module.id,
-                title=(part_title if len(pages) > 1 else info["title"])[:500],
+                title=part_title[:500],
                 order_index=index,
                 source_url=bilibili_video_url(bvid) + suffix,
                 duration_seconds=float(page["duration_seconds"]) if page.get("duration_seconds") else None,

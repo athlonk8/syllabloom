@@ -16,6 +16,7 @@ from ..schemas import AIProviderConfigUpdate, AppSettingUpdate, AssignmentAnswer
 from ..services.ai_providers import AIProviderConfigurationError, public_ai_provider_config, save_ai_provider_config
 from ..services.assignments import OfficialAssignmentDownloader
 from ..services.bilibili import BilibiliError, BilibiliService, open_media_stream
+from ..services.matching import propagate_matching_assignments
 from ..services.certificates import CertificateError, CertificateService
 from ..services.grader import AssignmentGrader, CloudSubmissionAcknowledgementRequired, GradingError
 from ..services.obsidian import ObsidianError, ObsidianWorkspace
@@ -356,7 +357,7 @@ def import_manual_bilibili(payload: BilibiliImportRequest, db: Session = Depends
     try:
         course = BilibiliService(db).import_course(payload.url, payload.name)
         db.add(CertificatePolicy(course_id=course.id, video_coverage_threshold=_threshold(db)))
-        job.course_id, job.status, job.stats = course.id, "completed", {"lectures": len(course.lectures), "manual": True}
+        job.course_id, job.status, job.stats = course.id, "completed", {"lectures": len(course.lectures), "manual": True, **propagate_matching_assignments(db, course)}
         _commit(db)
         return {"job_id": job.id, "course": _course_payload(db, course, details=True)}
     except (BilibiliError, ValueError) as exc:
@@ -417,7 +418,7 @@ def import_youtube(payload: YouTubeImportRequest, db: Session = Depends(get_db))
     try:
         course = YouTubeImporter(db).import_url(payload.url)
         db.add(CertificatePolicy(course_id=course.id, video_coverage_threshold=_threshold(db)))
-        job.course_id, job.status, job.stats = course.id, "completed", {"lectures": len(course.lectures), "source": "official YouTube Data API"}
+        job.course_id, job.status, job.stats = course.id, "completed", {"lectures": len(course.lectures), "source": "official YouTube Data API", **propagate_matching_assignments(db, course)}
         _commit(db)
         return {"job_id": job.id, "course": _course_payload(db, course, details=True)}
     except (MissingYouTubeApiKeyError, YouTubeImportError) as exc:
@@ -433,7 +434,7 @@ def import_manual_youtube(payload: ManualCourseImport, db: Session = Depends(get
     try:
         course = YouTubeImporter(db).import_manual(payload.name, [ManualVideo(**video.model_dump()) for video in payload.videos], payload.source_url, payload.channel_name)
         db.add(CertificatePolicy(course_id=course.id, video_coverage_threshold=_threshold(db)))
-        job.course_id, job.status, job.stats = course.id, "completed", {"lectures": len(course.lectures), "manual": True}
+        job.course_id, job.status, job.stats = course.id, "completed", {"lectures": len(course.lectures), "manual": True, **propagate_matching_assignments(db, course)}
         _commit(db)
         return {"job_id": job.id, "course": _course_payload(db, course, details=True)}
     except YouTubeImportError as exc:
@@ -449,7 +450,7 @@ def import_stanford(payload: StanfordImportRequest, db: Session = Depends(get_db
     try:
         course, stats = StanfordGenericImporter(db).import_url(payload.url, payload.max_pages, payload.max_depth)
         db.add(CertificatePolicy(course_id=course.id, video_coverage_threshold=_threshold(db)))
-        job.course_id, job.status, job.stats = course.id, "completed", stats
+        job.course_id, job.status, job.stats = course.id, "completed", {**stats, **propagate_matching_assignments(db, course)}
         _commit(db)
         return {"job_id": job.id, "course": _course_payload(db, course, details=True), "stats": stats}
     except StanfordImportError as exc:

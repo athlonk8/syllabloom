@@ -15,6 +15,8 @@ from app.services.bilibili import (
     BILIBILI_API,
     BilibiliError,
     BilibiliService,
+    clean_part_title,
+    clean_series_title,
     mixin_key,
     qr_svg,
     registered_domain,
@@ -291,3 +293,19 @@ def test_import_course_splits_multi_part_videos(monkeypatch, db) -> None:
 def test_import_course_rejects_non_bilibili_links(db) -> None:
     with pytest.raises(BilibiliError):
         BilibiliService(db).import_course("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+
+def test_clean_series_title_strips_repost_spam() -> None:
+    spammy = (
+        "大模型课程(中英字幕完结)斯坦福 CS336： 从头开始构建大模型草履虫看 了都能学会!"
+        "大模型教程|大模型|深度学 习|机器学习|AI斯坦福大学|研究生"
+    )
+    assert clean_series_title(spammy) == "大模型课程斯坦福 CS336： 从头开始构建大模型"
+    # Titles without spam pass through untouched.
+    assert clean_series_title("CS336 Series") == "CS336 Series"
+
+
+def test_clean_part_title_extracts_the_episode_label() -> None:
+    part = "【中英字幕完结】斯坦福CS336：从头开始构建大模型 _ 2025年最新 - 2.第2集：pytorch手动搭建LLM"
+    assert clean_part_title(part, 2) == "第2集：pytorch手动搭建LLM"
+    assert clean_part_title("Tokenization", 4) == "Tokenization"
