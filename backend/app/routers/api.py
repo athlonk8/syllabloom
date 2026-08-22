@@ -11,15 +11,15 @@ from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..database import get_db
-from ..models import AppSetting, Assignment, Certificate, CertificatePolicy, Course, Grade, ImportJob, ObsidianConfig, Resource, Submission, Video, WatchSession
-from ..schemas import AIProviderConfigUpdate, AppSettingUpdate, CertificateRequest, CourseCreate, GradeRequest, ManualCourseImport, ObsidianConfigUpdate, StanfordImportRequest, WatchSegmentCreate, YouTubeImportRequest
+from ..models import AppSetting, Assignment, Certificate, CertificatePolicy, Course, CourseSource, Grade, ImportJob, Lecture, ObsidianConfig, Resource, Submission, Video, WatchSession
+from ..schemas import AIProviderConfigUpdate, AppSettingUpdate, BilibiliLectureSourceUpdate, CertificateRequest, CourseCreate, GradeRequest, ManualCourseImport, ObsidianConfigUpdate, StanfordImportRequest, WatchSegmentCreate, YouTubeImportRequest
 from ..services.assignments import OfficialAssignmentDownloader
 from ..services.ai_providers import AIProviderConfigurationError, public_ai_provider_config, save_ai_provider_config
 from ..services.certificates import CertificateError, CertificateService
 from ..services.grader import AssignmentGrader, CloudSubmissionAcknowledgementRequired, GradingError
 from ..services.obsidian import ObsidianError, ObsidianWorkspace
 from ..services.stanford import StanfordGenericImporter, StanfordImportError
-from ..services.utils import path_is_within
+from ..services.utils import bilibili_embed_url, bilibili_video_url, extract_bilibili_video_id, path_is_within
 from ..services.watch_progress import course_progress, finish_watch_session, latest_resume_position, record_watch_segment
 from ..services.youtube import ManualVideo, MissingYouTubeApiKeyError, YouTubeImportError, YouTubeImporter
 
@@ -110,7 +110,7 @@ def _course_payload(db: Session, course: Course, details: bool = False) -> dict:
             "duration_seconds": lecture.duration_seconds,
             "slides_url": lecture.slides_url,
             "notes_url": lecture.notes_url,
-            "video": {"id": lecture.video.id, "external_id": lecture.video.external_id, "embed_url": lecture.video.embed_url, "thumbnail_url": lecture.video.thumbnail_url, "is_embeddable": lecture.video.is_embeddable} if lecture.video else None,
+            "video": {"id": lecture.video.id, "provider": lecture.video.provider, "external_id": lecture.video.external_id, "embed_url": lecture.video.embed_url, "thumbnail_url": lecture.video.thumbnail_url, "is_embeddable": lecture.video.is_embeddable} if lecture.video else None,
         }
         for lecture in sorted(course.lectures, key=lambda item: item.order_index)
     ]
@@ -154,6 +154,68 @@ def get_course(course_id: int, db: Session = Depends(get_db)) -> dict:
 @router.get("/courses/{course_id}/progress")
 def get_course_progress(course_id: int, db: Session = Depends(get_db)) -> dict:
     return course_progress(db, _course(db, course_id), _threshold(db))
+
+
+@router.put("/lectures/{lecture_id}/bilibili-source")
+def set_bilibili_lecture_source(
+    lecture_id: int, payload: BilibiliLectureSourceUpdate, db: Session = Depends(get_db)
+) -> dict:
+    lecture = db.get(Lecture, lecture_id)
+    if not lecture:
+        raise HTTPException(status_code=404, detail="Lecture not found.")
+    bvid = extract_bilibili_video_id(payload.url)
+    if not bvid:
+        raise HTTPException(status_code=422, detail="Paste a direct Bilibili video URL containing a BV identifier.")
+
+    source_url = bilibili_video_url(bvid)
+    if lecture.video is None:
+        lecture.video = Video(
+            provider="bilibili",
+            external_id=bvid,
+            embed_url=bilibili_embed_url(bvid),
+            is_embeddable=True,
+        )
+    else:
+        lecture.video.provider = "bilibili"
+        lecture.video.external_id = bvid
+        lecture.video.embed_url = bilibili_embed_url(bvid)
+        lecture.video.thumbnail_url = None
+        lecture.video.is_embeddable = True
+    if payload.title and payload.title.strip():
+        lecture.title = payload.title.strip()
+    lecture.source_url = source_url
+    lecture.course.updated_at = datetime.now(timezone.utc)
+
+    source = db.scalar(
+        select(CourseSource).where(
+            CourseSource.course_id == lecture.course_id,
+            CourseSource.source_url == source_url,
+        )
+    )
+    if source is None:
+        db.add(
+            CourseSource(
+                course_id=lecture.course_id,
+                source_url=source_url,
+                source_type="bilibili_learner_selected",
+                title=f"{lecture.title} (Bilibili)",
+                detected_as_official=False,
+                explanation=(
+                    "Learner-selected third-party Bilibili source. Availability and rights remain controlled by "
+                    "Bilibili and the uploader."
+                ),
+            )
+        )
+    else:
+        source.title = f"{lecture.title} (Bilibili)"
+        source.source_type = "bilibili_learner_selected"
+        source.detected_as_official = False
+        source.explanation = (
+            "Learner-selected third-party Bilibili source. Availability and rights remain controlled by "
+            "Bilibili and the uploader."
+        )
+    _commit(db)
+    return {"course": _course_payload(db, lecture.course, details=True)}
 
 
 @router.get("/dashboard")

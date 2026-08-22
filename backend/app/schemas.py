@@ -44,6 +44,11 @@ class StanfordImportRequest(BaseModel):
     max_depth: int | None = Field(default=None, ge=0, le=3)
 
 
+class BilibiliLectureSourceUpdate(BaseModel):
+    url: str = Field(min_length=12, max_length=1_000)
+    title: str | None = Field(default=None, min_length=1, max_length=500)
+
+
 class WatchSegmentCreate(BaseModel):
     video_id: int
     start_seconds: float = Field(ge=0)

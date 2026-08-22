@@ -18,6 +18,31 @@ def test_manual_course_watch_progress_survives_api_round_trip() -> None:
         assert restored.json()["progress"]["lectures"][0]["completed"] is True
 
 
+def test_learner_can_attach_a_bilibili_source_to_a_lecture() -> None:
+    with TestClient(app) as client:
+        imported = client.post(
+            "/api/imports/manual-youtube",
+            json={
+                "name": "Source switch test course",
+                "videos": [{"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "title": "Lecture"}],
+            },
+        )
+        assert imported.status_code == 201, imported.text
+        lecture_id = imported.json()["course"]["lectures"][0]["id"]
+
+        attached = client.put(
+            f"/api/lectures/{lecture_id}/bilibili-source",
+            json={"url": "https://www.bilibili.com/video/BV1Ect2zjEHR/"},
+        )
+        assert attached.status_code == 200, attached.text
+        lecture = attached.json()["course"]["lectures"][0]
+        assert lecture["source_url"] == "https://www.bilibili.com/video/BV1Ect2zjEHR/"
+        assert lecture["video"]["provider"] == "bilibili"
+        assert lecture["video"]["external_id"] == "BV1Ect2zjEHR"
+        assert "player.bilibili.com" in lecture["video"]["embed_url"]
+        assert any(source["source_type"] == "bilibili_learner_selected" for source in attached.json()["course"]["sources"])
+
+
 def test_explicit_obsidian_settings_route_is_not_captured_by_generic_setting(tmp_path) -> None:
     with TestClient(app) as client:
         response = client.put(

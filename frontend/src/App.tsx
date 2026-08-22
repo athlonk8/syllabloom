@@ -1,11 +1,12 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
+import { BilibiliPlayer } from "./components/BilibiliPlayer";
 import { YouTubePlayer } from "./components/YouTubePlayer";
 import { api, ApiError } from "./lib/api";
 import { detectLocale, localeLink, translate, type Locale, type Translator } from "./lib/i18n";
 import { formatPercent, formatSeconds } from "./lib/format";
 import { getInitialThemePreference, persistThemePreference, resolveTheme, systemPrefersDark, type ThemePreference } from "./lib/theme";
-import type { Assignment, Course, Dashboard } from "./types/api";
+import type { Assignment, Course, Dashboard, Lecture } from "./types/api";
 
 const PRESETS = [
   { label: "Karpathy - Zero to Hero", type: "youtube", url: "https://www.youtube.com/@AndrejKarpathy/playlists" },
@@ -338,6 +339,64 @@ function AssignmentCard({
   );
 }
 
+function BilibiliSourceSelector({
+  lecture,
+  onUpdated,
+  notify,
+  t,
+}: {
+  lecture: Lecture;
+  onUpdated: () => Promise<void>;
+  notify: (message: string) => void;
+  t: Translator;
+}) {
+  const [url, setUrl] = useState(lecture.video?.provider === "bilibili" ? lecture.source_url || "" : "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUrl(lecture.video?.provider === "bilibili" ? lecture.source_url || "" : "");
+    setError(null);
+  }, [lecture.id, lecture.source_url, lecture.video?.provider]);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await api("/lectures/" + lecture.id + "/bilibili-source", {
+        method: "PUT",
+        body: JSON.stringify({ url }),
+      });
+      await onUpdated();
+      notify(t("notice.bilibiliAttached"));
+    } catch (cause) {
+      setError(messageFrom(cause, t));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <details className="source-selector">
+      <summary>{t("course.bilibiliSource")}</summary>
+      <p>{t("course.bilibiliSourceHint")}</p>
+      <form onSubmit={submit}>
+        <input
+          value={url}
+          onChange={(event) => setUrl(event.target.value)}
+          type="url"
+          required
+          placeholder="https://www.bilibili.com/video/BV.../"
+          aria-label={t("course.bilibiliSource")}
+        />
+        <button disabled={busy}>{busy ? t("course.bilibiliSaving") : t("course.bilibiliUse")}</button>
+      </form>
+      {error && <p className="inline-error">{error}</p>}
+    </details>
+  );
+}
+
 function CourseWorkspace({
   course,
   locale,
@@ -419,19 +478,24 @@ function CourseWorkspace({
         </aside>
         <section className="learning-stage">
           {lecture?.video ? (
-            <YouTubePlayer lecture={lecture} locale={locale} onProgress={() => void onRefresh()} />
+            lecture.video.provider === "bilibili"
+              ? <BilibiliPlayer lecture={lecture} locale={locale} />
+              : <YouTubePlayer lecture={lecture} locale={locale} onProgress={() => void onRefresh()} />
           ) : (
             <div className="empty-player"><h3>{t("course.noPlayer")}</h3><p>{t("course.noPlayerDescription")}</p></div>
           )}
           {lecture && (
-            <div className="lecture-context">
-              <div>
-                <p className="eyebrow">{t("course.lecture", { number: lecture.order_index })}</p>
-                <h2>{lecture.title}</h2>
-                <p>{lecture.description || t("course.defaultLectureDescription")}</p>
+            <>
+              <div className="lecture-context">
+                <div>
+                  <p className="eyebrow">{t("course.lecture", { number: lecture.order_index })}</p>
+                  <h2>{lecture.title}</h2>
+                  <p>{lecture.description || t("course.defaultLectureDescription")}</p>
+                </div>
+                {lecture.source_url && <a href={lecture.source_url} target="_blank" rel="noreferrer">{t(lecture.video?.provider === "bilibili" ? "course.selectedSource" : "course.officialSource")}</a>}
               </div>
-              {lecture.source_url && <a href={lecture.source_url} target="_blank" rel="noreferrer">{t("course.officialSource")}</a>}
-            </div>
+              <BilibiliSourceSelector lecture={lecture} onUpdated={onRefresh} notify={notify} t={t} />
+            </>
           )}
         </section>
         <aside className="course-inspector">

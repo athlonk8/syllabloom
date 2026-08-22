@@ -40,6 +40,34 @@ def extract_youtube_playlist_id(url: str) -> str | None:
     return parse_qs(parsed.query).get("list", [None])[0]
 
 
+def extract_bilibili_video_id(url: str) -> str | None:
+    """Return a BV identifier from a normal Bilibili video or player URL.
+
+    This deliberately accepts only direct Bilibili URLs.  Short links would
+    need a network redirect, which keeps source selection less predictable and
+    makes it harder to preserve the learner's exact provenance.
+    """
+    parsed = urlparse(url)
+    host = parsed.netloc.lower().removeprefix("www.")
+    if host not in {"bilibili.com", "m.bilibili.com", "player.bilibili.com"}:
+        return None
+    match = re.search(r"(?:^|/)video/(BV[0-9A-Za-z]{10})(?:/|$)|(?:^|[?&])bvid=(BV[0-9A-Za-z]{10})(?:&|$)", url)
+    if not match:
+        return None
+    return match.group(1) or match.group(2)
+
+
+def bilibili_video_url(bvid: str) -> str:
+    return f"https://www.bilibili.com/video/{bvid}/"
+
+
+def bilibili_embed_url(bvid: str) -> str:
+    return (
+        "https://player.bilibili.com/player.html"
+        f"?bvid={bvid}&page=1&high_quality=1&danmaku=0"
+    )
+
+
 def is_stanford_url(url: str) -> bool:
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower()

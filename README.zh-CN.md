@@ -13,6 +13,7 @@ Syllabloom 由 syllabus 和 bloom 组合而来，表达「把课程大纲变成�
 ## 主要能力
 
 - 通过官方 YouTube Data API 导入公开视频和播放列表。
+- 可在任一讲次下粘贴直接包含 BV 号的 B 站视频链接，并使用 B 站自身的 iframe 播放器播放。此类链接会明确标为学习者选择的第三方来源，不会被表述为课程官方材料。
 - 在遵守 robots 规则、限制页面数量和深度的前提下导入公开 Stanford 课程页面。
 - 通过 YouTube IFrame Player API 记录不重复的真实观看区间；拖动进度条不会被算作已观看。
 - 将课程、下载内容、提交快照和证书保存在本地 SQLite 数据库与本地数据目录中。
@@ -26,6 +27,7 @@ Syllabloom 由 syllabus 和 bloom 组合而来，表达「把课程大纲变成�
 
 - 不绕过 Canvas、SSO、Gradescope、付费墙、登录或任何访问控制。
 - 不抓取 YouTube 网页 HTML 来替代官方 API。
+- 不复制 B 站内容、不推断其授权状态，也不绕过 B 站的任何访问限制。
 - 不会把 AI 编造的内容标为官方作业。
 - 不会静默上传你的笔记、答案或课程资料。
 - 不会签发大学学位、官方成绩或暗示与 Stanford 等课程提供方有关联。
@@ -71,7 +73,7 @@ Windows PowerShell 也可以使用：
 1. 启动后打开 Settings。
 2. 若要自动导入 YouTube 播放列表元数据，填写 YouTube Data API 密钥；没有密钥时可用 Manual fallback 手动创建公开视频课程。
 3. 如需 Obsidian，设置一个已存在的 Vault 路径。应用只会写入其中的 AI-Learning 目录，且绝不会覆盖已有 Answer.md。
-4. 导入公开 YouTube 视频、播放列表或公开 Stanford 课程网址。
+4. 导入公开 YouTube 视频、播放列表或公开 Stanford 课程网址；也可在任一讲次下展开「使用 B 站来源」，粘贴直接的 BV 视频链接。
 5. 在应用中观看可嵌入视频。进度按不重复观看区间计算，而不是点击「完成」。
 6. 对公开官方作业，下载原始资料、创建笔记、编辑 Answer.md；只有你主动勾选确认后，才会请求 AI 反馈。
 

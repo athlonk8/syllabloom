@@ -1,5 +1,6 @@
 export interface Video {
   id: number;
+  provider: string;
   external_id: string;
   embed_url: string | null;
   thumbnail_url: string | null;
