@@ -443,6 +443,22 @@ Object.assign(messages.zh, {
   "player.exitFullscreen": "退出全屏",
 });
 
+Object.assign(messages.en, {
+  "player.bilibiliHdHint": "Sign in with Bilibili in this tab. When sign-in finishes, Bilibili returns to this exact course and Syllabloom reloads the in-page player.",
+  "player.bilibiliReturnDetected": "Bilibili sign-in return detected — the in-page player has been reloaded.",
+  "player.bilibiliLogin": "Sign in and return to player",
+  "player.bilibiliRefresh": "I have signed in — reload player",
+  "player.fullscreenUnavailable": "Full screen was blocked by this browser",
+});
+
+Object.assign(messages.zh, {
+  "player.bilibiliHdHint": "在当前标签页登录 B 站。登录完成后会自动回到当前课程，Syllabloom 会重新加载页面内播放器。",
+  "player.bilibiliReturnDetected": "已检测到 B 站登录回跳，页面内播放器已重新加载。",
+  "player.bilibiliLogin": "登录后返回播放器",
+  "player.bilibiliRefresh": "我已登录，重新加载播放器",
+  "player.fullscreenUnavailable": "当前浏览器阻止了全屏",
+});
+
 export function translate(locale: Locale, key: string, values: TranslationValues = {}): string {
   let text = messages[locale][key] ?? messages.en[key] ?? key;
   for (const [name, value] of Object.entries(values)) {
@@ -463,6 +479,10 @@ export function detectLocale(): Locale {
 
 export function localeLink(locale: Locale): string {
   const url = new URL(window.location.href);
+  // These parameters are a one-time Bilibili sign-in handoff. Never retain
+  // them in language links that are rendered during the return transition.
+  url.searchParams.delete("bilibili_login");
+  url.searchParams.delete("bilibili_lecture");
   url.searchParams.set("lang", locale);
   return url.pathname + url.search + url.hash;
 }

@@ -1,5 +1,7 @@
 # Syllabloom
 
+新版图文说明：[功能图文说明](docs/FEATURE_TOUR.zh-CN.md)。其中包含 B 站登录后回到同一课程并自动刷新页面内播放器的流程。
+
 [English](README.md) · 中文
 
 Syllabloom 是一个本地优先的学习工作台：它把公开课程、真实观看覆盖度、Obsidian 笔记、作业快照、可选 AI 反馈和独立学习记录组合在一起，供学习者在自己的设备上长期使用。

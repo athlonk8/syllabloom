@@ -8,7 +8,7 @@ Run from `backend/`:
 ..\.venv\Scripts\pytest.exe -q
 ```
 
-Current result: **19 passed**. Coverage includes watch-interval merging, true completion threshold, three distinct Stanford importer fixtures, protected-link treatment, Obsidian `Answer.md` preservation, grading schema parsing, OpenAI-compatible provider request construction, secret masking, API progress persistence, fresh-directory and legacy-schema Alembic migration, settings-route isolation, and real PDF construction/text extraction.
+Current result: **26 passed**. Coverage includes watch-interval merging, true completion threshold, three distinct Stanford importer fixtures, protected-link treatment, Obsidian `Answer.md` preservation, local draft/version API workflow, grading schema parsing, OpenAI-compatible provider request construction, secret masking, API progress persistence, fresh-directory and legacy-schema Alembic migration, settings-route isolation, and real PDF construction/text extraction.
 
 Run from `frontend/`:
 
@@ -17,7 +17,17 @@ npm run build
 npm test
 ```
 
-Current result: TypeScript production build passes; Vitest **2 passed**.
+Current result: TypeScript production build passes; Vitest **4 passed**.
+
+## Local UI and Bilibili return check
+
+The local UI was exercised at `http://127.0.0.1:8000` with the imported CS336 Bilibili source.
+
+- The Bilibili iframe remained inside the course page.
+- A simulated post-login return URL selected the same course and lecture, removed the one-time `bilibili_login` and `bilibili_lecture` parameters, scrolled to the embedded player, and re-mounted the iframe.
+- The language links retained the selected course but did not retain the one-time sign-in parameters.
+- The in-page fullscreen control was exercised. The validation browser declined its Fullscreen API request, and the UI correctly reported that browser limitation without treating the embed itself as unavailable.
+- Eight credential-free local UI captures are committed in [the feature tour](FEATURE_TOUR.md).
 
 ## Database migration check
 

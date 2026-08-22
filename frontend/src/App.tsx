@@ -16,6 +16,18 @@ const PRESETS = [
   { label: "Stanford CS336", type: "stanford", url: "https://cs336.stanford.edu/" },
 ];
 
+function courseIdFromLocation(): number | null {
+  const value = new URLSearchParams(window.location.search).get("course");
+  const courseId = Number(value);
+  return Number.isSafeInteger(courseId) && courseId > 0 ? courseId : null;
+}
+
+function writeCourseToLocation(courseId: number) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("course", String(courseId));
+  window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+}
+
 type AIProviderName = "codex_cli" | "openai_compatible" | "disabled";
 
 type AIProviderStatus = {
@@ -488,7 +500,7 @@ function CourseWorkspace({
         <section className="learning-stage">
           {lecture?.video ? (
             lecture.video.provider === "bilibili"
-              ? <BilibiliPlayer lecture={lecture} locale={locale} />
+              ? <BilibiliPlayer lecture={lecture} locale={locale} courseId={course.id} />
               : <YouTubePlayer lecture={lecture} locale={locale} onProgress={() => void onRefresh()} />
           ) : (
             <div className="empty-player"><h3>{t("course.noPlayer")}</h3><p>{t("course.noPlayerDescription")}</p></div>
@@ -632,7 +644,9 @@ export default function App() {
   useEffect(() => {
     void refreshDashboard()
       .then((data) => {
-        if (data.courses[0]) return api<Course>("/courses/" + data.courses[0].id).then(setCourse);
+        const requestedCourseId = courseIdFromLocation();
+        const selectedCourse = data.courses.find((item) => item.id === requestedCourseId) || data.courses[0];
+        if (selectedCourse) return api<Course>("/courses/" + selectedCourse.id).then(setCourse);
       })
       .catch((cause) => setNotice(messageFrom(cause, t)))
       .finally(() => setLoading(false));
@@ -640,7 +654,9 @@ export default function App() {
 
   const selectCourse = async (courseId: number) => {
     try {
-      setCourse(await api<Course>("/courses/" + courseId));
+      const selectedCourse = await api<Course>("/courses/" + courseId);
+      setCourse(selectedCourse);
+      writeCourseToLocation(selectedCourse.id);
     } catch (cause) {
       setNotice(messageFrom(cause, t));
     }
@@ -648,6 +664,7 @@ export default function App() {
 
   const imported = async (newCourse: Course) => {
     setCourse(newCourse);
+    writeCourseToLocation(newCourse.id);
     await refreshDashboard();
     setNotice(t("notice.imported", { name: newCourse.name }));
   };

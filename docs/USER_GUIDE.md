@@ -28,7 +28,7 @@ Some videos cannot be embedded because the publisher disables embeds or removes 
 
 Expand **Use a Bilibili source** below a lecture and paste a direct `BV...` video URL. This creates a learner-selected, third-party source; it does not turn that video into official course material.
 
-The embedded Bilibili player requests Bilibili's high-quality mode, but the actual quality menu is controlled by Bilibili, the selected video, your account entitlement, network conditions, and browser privacy settings. Use **Sign in to Bilibili** to open Bilibili's own first-party login page. Syllabloom never receives a password, QR code, or cookie. After sign-in, return and use **Refresh player**; Bilibili may make your logged-in options available in the iframe. Use **Open HD on Bilibili** when your browser blocks third-party cookies or you want Bilibili's full first-party player. The in-page **Full screen** button expands the player without leaving the course workspace.
+The embedded Bilibili player requests Bilibili's high-quality mode, but the actual quality menu is controlled by Bilibili, the selected video, your account entitlement, network conditions, and browser privacy settings. Use **Sign in and return to player** to open Bilibili's own first-party login page in the current tab. Syllabloom never receives a password, QR code, or cookie. The login return target preserves the current course and lecture; after Bilibili signs you in, it returns to that page, removes the one-time handoff parameters from the URL, and reloads the iframe automatically. Use **I have signed in — reload player** only as a manual fallback. Use **Open HD on Bilibili** when your browser blocks third-party cookies or you want Bilibili's full first-party player. The in-page **Full screen** button expands the player without leaving the course workspace when the browser permits the Fullscreen API.
 
 ## Import a Stanford course
 
@@ -124,3 +124,5 @@ The language controls are real links with a lang query parameter, so a saved or 
 - Revisit history instead of overwriting past work when you want to compare learning progress.
 
 See [Installation](INSTALLATION.md) for configuration and recovery, and [Architecture](ARCHITECTURE.md) for the trust and provenance model.
+
+For annotated, credential-free interface screenshots, see the [feature tour](FEATURE_TOUR.md).

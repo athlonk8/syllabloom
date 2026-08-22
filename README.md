@@ -13,7 +13,7 @@ The name combines syllabus and bloom: a course plan becomes something you active
 ## What it does
 
 - Imports public YouTube videos and playlists through the official YouTube Data API.
-- Lets a learner attach a direct Bilibili BV video URL to any lecture and play it through Bilibili's own iframe player. The player offers a first-party Bilibili sign-in link, refresh, in-page fullscreen, and an "Open HD on Bilibili" fallback. Syllabloom never handles Bilibili passwords or cookies; available quality remains controlled by Bilibili, the video, the account, and browser cookie settings. Such sources are explicitly marked learner-selected and third-party; they are never presented as official course material.
+- Lets a learner attach a direct Bilibili BV video URL to any lecture and play it through Bilibili's own iframe player. **Sign in and return to player** opens Bilibili's first-party sign-in page in the current tab and returns to the same course and embedded player after sign-in; it then reloads the iframe automatically. The player also offers refresh, in-page fullscreen, and an "Open HD on Bilibili" fallback. Syllabloom never handles Bilibili passwords or cookies; available quality remains controlled by Bilibili, the video, the account, and browser cookie settings. Such sources are explicitly marked learner-selected and third-party; they are never presented as official course material.
 - Imports bounded, robots-aware public Stanford course pages without bypassing access controls.
 - Tracks unique watched video intervals through the YouTube IFrame Player API. Seeking does not count as watching.
 - Keeps course records, downloads, submission snapshots, and certificates local in SQLite and the local data directory.
@@ -124,6 +124,8 @@ Syllabloom makes a clear distinction between public official work, protected res
 | [Installation guide](docs/INSTALLATION.md) | Docker and native setup, ports, Obsidian mounts, local AI endpoints, updates, and troubleshooting. |
 | [安装指南（中文）](docs/INSTALLATION.zh-CN.md) | 中文安装、配置和排错说明。 |
 | [User guide](docs/USER_GUIDE.md) | Course importing, notes, feedback, certificates, and study workflow. |
+| [Feature tour](docs/FEATURE_TOUR.md) | Screenshot tour of the core interface, Bilibili return flow, and local study workflow. |
+| [功能图文说明（中文）](docs/FEATURE_TOUR.zh-CN.md) | 中文截图说明与学习流程。 |
 | [用户指南（中文）](docs/USER_GUIDE.zh-CN.md) | 中文使用流程和数据边界说明。 |
 | [Architecture](docs/ARCHITECTURE.md) | Service boundaries, provenance, and trust model. |
 | [Testing record](docs/TESTING.md) | Current automated and manual verification record. |
