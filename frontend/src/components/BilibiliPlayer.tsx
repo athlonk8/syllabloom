@@ -81,9 +81,9 @@ export function BilibiliPlayer({ lecture, locale, courseId }: { lecture: Lecture
             className="bilibili-player"
             src={embedUrl}
             title={lecture.title}
-            allow="autoplay; fullscreen; picture-in-picture"
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
             allowFullScreen
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-storage-access-by-user-activation"
             referrerPolicy="strict-origin-when-cross-origin"
             onLoad={() => setFailed(false)}
             onError={() => setFailed(true)}

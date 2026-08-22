@@ -443,7 +443,7 @@ Object.assign(messages.zh, {
 
 Object.assign(messages.en, {
   "player.bilibiliHdTitle": "Keep Bilibili playback in this page",
-  "player.bilibiliHdHint": "Sign in with Bilibili in this tab. When sign-in finishes, Bilibili returns to this exact course and Syllabloom reloads the embedded player.",
+  "player.bilibiliHdHint": "Sign in with Bilibili in this tab. When sign-in finishes, Bilibili returns to this exact course and Syllabloom reloads the embedded player. Account-based quality needs Bilibili to access that signed-in session inside the frame.",
   "player.bilibiliReturnDetected": "Bilibili sign-in return detected — the in-page player has been reloaded.",
   "player.bilibiliLogin": "Sign in and return to player",
   "player.bilibiliRefresh": "Reload in-page player",
@@ -453,7 +453,7 @@ Object.assign(messages.en, {
 
 Object.assign(messages.zh, {
   "player.bilibiliHdTitle": "始终在本页面播放 B 站视频",
-  "player.bilibiliHdHint": "在当前标签页登录 B 站。登录完成后会自动回到当前课程，Syllabloom 会重新加载页面内播放器。",
+  "player.bilibiliHdHint": "在当前标签页登录 B 站。登录完成后会自动回到当前课程，Syllabloom 会重新加载页面内播放器。720P 等账号清晰度需要 B 站能在 iframe 内读取该登录会话。",
   "player.bilibiliReturnDetected": "已检测到 B 站登录回跳，页面内播放器已重新加载。",
   "player.bilibiliLogin": "登录后返回播放器",
   "player.bilibiliRefresh": "重新加载页面内播放器",
