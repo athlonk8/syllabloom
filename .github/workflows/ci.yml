@@ -50,4 +50,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build container image
-        run: docker build --tag personal-ai-learning-os:ci .
+        run: docker build --tag syllabloom:ci .

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..config import environment_value
 from ..models import AppSetting
 from ..schemas import AIProviderConfigUpdate
 
@@ -33,10 +33,10 @@ class AIProviderConfig:
 
 
 _ENVIRONMENT_KEYS = {
-    "AI_PROVIDER": "PALO_AI_PROVIDER",
-    "AI_BASE_URL": "PALO_AI_BASE_URL",
-    "AI_MODEL": "PALO_AI_MODEL",
-    "AI_API_KEY": "PALO_AI_API_KEY",
+    "AI_PROVIDER": "AI_PROVIDER",
+    "AI_BASE_URL": "AI_BASE_URL",
+    "AI_MODEL": "AI_MODEL",
+    "AI_API_KEY": "AI_API_KEY",
 }
 
 
@@ -44,7 +44,7 @@ def _setting_value(db: Session, key: str, default: str | None = None) -> str | N
     setting = db.scalar(select(AppSetting).where(AppSetting.key == key))
     if setting is not None:
         return setting.value
-    return os.getenv(_ENVIRONMENT_KEYS[key], default)
+    return environment_value(_ENVIRONMENT_KEYS[key], default)
 
 
 def _upsert_setting(db: Session, key: str, value: str, *, is_secret: bool = False) -> None:

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping make local-first learning tools more useful and trustworthy.
+Thanks for helping make Syllabloom and local-first learning tools more useful and trustworthy.
 
 ## Local development
 

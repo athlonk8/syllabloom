@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and run Personal AI Learning OS from a single terminal command."""
+"""Build and run Syllabloom from a single terminal command."""
 
 from __future__ import annotations
 
@@ -83,7 +83,7 @@ def wait_for_server(url: str, process: subprocess.Popen[object]) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build and run the local Personal AI Learning OS web app.")
+    parser = argparse.ArgumentParser(description="Build and run the local Syllabloom web app.")
     parser.add_argument("--port", type=int, default=8000, help="Local HTTP port (default: 8000).")
     parser.add_argument("--host", default="127.0.0.1", help="Local bind address (default: 127.0.0.1).")
     parser.add_argument("--no-browser", action="store_true", help="Do not open the browser automatically.")
@@ -103,11 +103,11 @@ def main() -> int:
 
     url = f"http://{args.host}:{args.port}"
     environment = os.environ.copy()
-    environment["PALO_FRONTEND_DIST"] = str(FRONTEND_DIR / "dist")
+    environment["SYLLABLOOM_FRONTEND_DIST"] = str(FRONTEND_DIR / "dist")
     command = [str(python), "-m", "uvicorn", "app.main:app", "--host", args.host, "--port", str(args.port)]
     if args.reload:
         command.append("--reload")
-    print(f"Starting Personal AI Learning OS at {url}", flush=True)
+    print(f"Starting Syllabloom at {url}", flush=True)
     process = subprocess.Popen(command, cwd=BACKEND_DIR, env=environment)
 
     if not args.no_browser:
@@ -122,7 +122,7 @@ def main() -> int:
     try:
         return process.wait()
     except KeyboardInterrupt:
-        print("\nStopping Personal AI Learning OS…", flush=True)
+        print("\nStopping Syllabloom…", flush=True)
         process.terminate()
         try:
             process.wait(timeout=10)

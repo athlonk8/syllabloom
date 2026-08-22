@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 
 # Must be set before application modules are imported in test files.
-TEST_DATA_DIR = Path(tempfile.mkdtemp(prefix="palo-tests-"))
-os.environ["PALO_DATA_DIR"] = str(TEST_DATA_DIR)
+TEST_DATA_DIR = Path(tempfile.mkdtemp(prefix="syllabloom-tests-"))
+os.environ["SYLLABLOOM_DATA_DIR"] = str(TEST_DATA_DIR)
 
 import pytest
 from sqlalchemy import create_engine

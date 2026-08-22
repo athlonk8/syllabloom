@@ -1,90 +1,203 @@
-# 安装与运行
+# Installation and operations guide
 
-## Docker Desktop（推荐）
+[中文](INSTALLATION.zh-CN.md)
 
-前提：安装并启动 Docker Desktop，然后在项目根目录执行：
+This guide covers local installation, persistent data, optional AI providers, Obsidian, updates, backups, and recovery. For the shortest route, use the Docker commands in the [README](../README.md).
 
-    docker compose up --build
+## Choose a runtime
 
-访问 http://localhost:8080 。关闭终端会停止服务；需要后台运行时使用：
+| Option | Choose it when | Address |
+| --- | --- | --- |
+| Docker Desktop | You want one service and do not need to run Codex CLI inside the container. | http://localhost:8080 |
+| Native launcher | You want the application to use a Codex CLI installed on your machine, or prefer direct local files. | http://127.0.0.1:8000 |
+
+Both modes serve the frontend and FastAPI application together. A separate Vite server is not needed for normal use.
+
+## Docker Desktop setup
+
+1. Install Docker Desktop and verify that its engine is running.
+2. Clone the repository:
+
+       git clone https://github.com/athlonk8/syllabloom.git
+       cd syllabloom
+
+3. Start the application:
+
+       docker compose up --build
+
+4. Open http://localhost:8080.
+
+The command remains attached to the terminal and prints logs. To run in the background:
 
     docker compose up --build -d
 
-查看日志：
+Useful commands:
 
     docker compose logs -f
-
-停止服务但保留学习数据：
-
     docker compose down
+    docker compose up
 
-Docker 数据存储在 palo-data volume。要连同所有 Docker 中的学习数据一起移除，请明确执行：
+Docker keeps runtime data in a named Syllabloom volume. The following command is destructive:
 
     docker compose down --volumes
 
-这会删除容器内的 SQLite、下载内容、提交快照和证书，无法从该 volume 恢复。
+It deletes the SQLite database, downloaded materials, submission snapshots, and generated certificates. Back up important data before using it.
 
-### Docker 中使用 Obsidian
+### Docker and Obsidian
 
-Docker 无法自动看到主机文件夹。先在 compose.yaml 的 app.volumes 下添加你的 Vault 挂载，例如 Windows：
+A container cannot see host folders unless you mount them. Add a bind mount under the app service in compose.yaml, alongside the existing data volume:
 
-    - "C:/Users/you/Documents/MyVault:/vault"
+    volumes:
+      - syllabloom-data:/data
+      - "C:/Users/you/Documents/MyVault:/vault"
 
-重启 docker compose 后，在网页 Settings 中将 Obsidian Vault Path 填为 /vault。应用仍只会创建 /vault/AI-Learning。
+Use an absolute host path appropriate for your computer. Restart the compose service, then set Obsidian Vault Path to /vault in Settings. Syllabloom writes only inside /vault/AI-Learning.
 
-### Docker 中使用本机 Ollama 或 LM Studio
+### Docker and a local AI server
 
-在 Settings 选择 OpenAI-compatible endpoint。Docker Desktop 通常可通过下列地址访问主机上的服务：
+From a Docker container, localhost refers to the container itself. When Ollama or LM Studio runs on the host, Docker Desktop normally exposes it at:
 
     http://host.docker.internal:11434/v1
 
-填写服务实际暴露的模型名称。Ollama 和 LM Studio 的 OpenAI 兼容模式通常不需要 API key。不要把 localhost 写入 Docker 配置；容器中的 localhost 指向容器自身。
+Set that address as the compatible API base URL and use the model name the server exposes. Do not use http://localhost:11434/v1 in this Docker configuration.
 
-Codex CLI 需要由启动应用的操作系统直接执行，因此推荐在原生启动模式下使用。Docker 用户可选择兼容 API，或自行构建带有受控 Codex CLI 的镜像。
+The standard image does not bundle or authenticate Codex CLI. Use an OpenAI-compatible endpoint in Docker, or choose native launch when you need Codex CLI.
 
-## 原生运行
+## Native setup
 
-前提：Python 3.11+、Node.js 22.22.2+（LTS）、24.15+ 或更新的兼容版本，以及 Git（只在使用 GitHub 作业资源时需要）。
+### Prerequisites
 
-在项目根目录执行：
+- Python 3.11 or newer.
+- Node.js 22.22.2 or newer in the 22 major line, Node.js 24.15.0 or newer in the 24 major line, or a newer compatible release.
+- Git if you want to clone the project or download a public GitHub assignment resource.
+- Codex CLI only if you choose Codex CLI feedback.
 
+Clone and launch:
+
+    git clone https://github.com/athlonk8/syllabloom.git
+    cd syllabloom
     python scripts/run_local.py
 
-Windows PowerShell 也可以执行：
+On Windows PowerShell:
 
     .\scripts\start-local.ps1
 
-首次运行时脚本会创建 .venv、安装 Python 和 Node 依赖、构建网页并执行 Alembic migration。之后依赖文件未变更时会复用本地环境。
+The launcher creates .venv, installs Python dependencies when requirements change, runs npm ci when the package lock changes, builds the production frontend, executes database migrations, and starts FastAPI.
 
-可选参数：
+Available options:
 
     python scripts/run_local.py --no-browser
     python scripts/run_local.py --port 8090
     python scripts/run_local.py --reload
+    python scripts/run_local.py --skip-install
 
-按 Ctrl+C 停止原生服务。运行数据默认位于 data 目录；想把数据放到别处，可在启动前设置 PALO_DATA_DIR。
+Use --skip-install only after a successful normal installation. Reload mode is for contributors. Press Ctrl+C to stop the native server.
 
-PowerShell 示例：
+## Configuration
 
-    $env:PALO_DATA_DIR = "D:\LearningOSData"
-    python scripts/run_local.py
+Most users should configure Syllabloom through Settings. Secrets are stored locally in SQLite and the settings response masks them.
 
-## 更新
+For repeatable local setup, copy .env.example to .env in the repository root:
 
-拉取项目更新后重新运行相同启动命令：
+    Copy-Item .env.example .env
+
+On macOS or Linux:
+
+    cp .env.example .env
+
+The .env file is ignored by Git. Never commit a real API key.
+
+| Variable | Purpose | Typical value |
+| --- | --- | --- |
+| SYLLABLOOM_DATA_DIR | Native data location. | D:/SyllabloomData |
+| SYLLABLOOM_DATABASE_URL | Advanced SQLAlchemy URL override. | Leave blank for the local default. |
+| SYLLABLOOM_YOUTUBE_API_KEY | Official YouTube Data API key. | Optional. |
+| SYLLABLOOM_WATCH_COMPLETION_THRESHOLD | Unique video coverage required for completion. | 0.85 |
+| SYLLABLOOM_CRAWL_MAX_PAGES | Maximum public source pages examined per import. | 18 |
+| SYLLABLOOM_CRAWL_MAX_DEPTH | Maximum same-host link depth from the supplied URL. | 1 |
+| SYLLABLOOM_AI_PROVIDER | codex_cli, openai_compatible, or disabled. | codex_cli |
+| SYLLABLOOM_AI_BASE_URL | Compatible Chat Completions API base URL. | http://localhost:11434/v1 |
+| SYLLABLOOM_AI_MODEL | Model name for a compatible provider. | Provider-specific |
+| SYLLABLOOM_AI_API_KEY | Optional compatible-provider key. | Blank for many local servers |
+
+Docker Compose reads the same SYLLABLOOM variables from the environment or a root .env file. Settings can later store values for the running installation.
+
+## Configure providers in Settings
+
+### YouTube
+
+Automatic playlist and video metadata comes only from the official YouTube Data API. Create and appropriately restrict an API key in your own Google Cloud project, then paste it in Settings. Manual fallback works for a known public video without a key.
+
+### Obsidian
+
+Choose an existing vault. The application creates a path similar to AI-Learning/course-name/Assignments/assignment-key and uses Answer.md as the shared editable answer. It never overwrites an existing Answer.md and never writes outside the configured vault.
+
+### Codex CLI
+
+Native mode can use a Codex CLI installed and authenticated on the host. Check it in the same terminal environment:
+
+    codex --version
+
+Settings reports whether the executable is discoverable. After an explicit submission confirmation, Syllabloom creates a staged copy and asks Codex for feedback using a read-only sandbox. Codex cannot mutate the working assignment directory.
+
+### OpenAI-compatible endpoint
+
+This supports Ollama, LM Studio, vLLM, OpenAI, and other servers that expose Chat Completions-compatible endpoints. Enter the base URL, model name, and key when needed.
+
+A common native local-server address is:
+
+    http://localhost:11434/v1
+
+For Docker-to-host traffic, use the address shown in the Docker section. A remote endpoint is an external service and may charge for usage or retain staged answer data under its own policy. Syllabloom asks for a fresh checkbox acknowledgement before every request.
+
+### Disabled
+
+Disabled prevents AI review. Public official tests can still run when an imported assignment provides them.
+
+## Language
+
+The first-run UI language is English. Use English or 中文 in the sidebar footer to switch. The link writes a lang query parameter so it works as a normal hyperlink; when browser storage is available, the selection is remembered.
+
+## Data, backups, and updates
+
+Native mode keeps its database and LearningVault below the configured data directory. It includes source downloads, workspaces, snapshots, feedback, and certificates. Stop Syllabloom and copy the complete data directory for the simplest backup.
+
+Docker mode keeps equivalent data in the named volume. Use your normal Docker volume backup process and verify a backup before an upgrade. A Git clone is not a backup: runtime data and secrets are intentionally ignored by Git.
+
+To move a native installation:
+
+1. Stop Syllabloom.
+2. Copy the entire data directory.
+3. Set SYLLABLOOM_DATA_DIR to the copied location before starting on the new machine.
+4. Start Syllabloom and verify the dashboard and assignment history.
+
+Update Docker:
 
     git pull
     docker compose up --build
 
-或：
+Update native:
 
     git pull
     python scripts/run_local.py
 
-启动器会检测 requirements.txt 与 package-lock.json 的变化；数据库 migration 会在每次启动时安全地执行。
+Database migrations run at startup. A database with a complete legacy schema but no Alembic revision is verified and safely stamped. A partial database is not silently treated as current.
 
-## AI 提供方说明
+## Troubleshooting
 
-Codex CLI 是本机命令行集成，不需要在应用中复制粘贴密钥。用户需要自己安装并登录 Codex，并在 Settings 确认其状态。
+| Symptom | Check |
+| --- | --- |
+| Port is already in use | Use native --port 8090, or change 8080:8000 in compose.yaml to an available host port. |
+| Docker page does not load | Run docker compose logs -f and confirm Docker Desktop is running. |
+| Codex CLI is unavailable | Use native mode, run codex --version in the same shell, then restart after installing or signing in. |
+| Docker cannot reach Ollama | Use host.docker.internal instead of localhost and ensure the host server accepts container traffic. |
+| Playlist import asks for an API key | Add a YouTube Data API key or use Manual fallback for a public video. |
+| Stanford source is protected | This is expected for a login-gated resource. Syllabloom records provenance but will not bypass the gate. |
+| Obsidian export fails in Docker | Confirm the host folder is mounted, Settings uses the container path, and the folder is writable. |
+| A migration fails | Back up the data directory, inspect the error, and report it without private data. Do not delete the database as the first response. |
 
-OpenAI-compatible 模式使用 POST 到 base URL 下的 chat/completions。它支持本地和远程提供方。远程提供方可能产生费用，并会在用户每次明确确认后收到必要的作业反馈材料；请先阅读该提供方的隐私政策。
+## Uninstall
+
+Native mode: stop the server, then remove the repository and only remove the data directory when you deliberately want to erase learning records.
+
+Docker mode: docker compose down removes the service but retains data. Delete the named volume only after deciding to erase everything.

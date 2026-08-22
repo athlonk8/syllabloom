@@ -4,7 +4,7 @@ The application is intentionally local-first. Its only automatic writes are unde
 
 | Operation | Boundary |
 | --- | --- |
-| SQLite, downloads, snapshots, grading workspaces | `data/` / `LearningVault/` below the project or the explicitly configured `PALO_DATA_DIR`. |
+| SQLite, downloads, snapshots, grading workspaces | `data/` / `LearningVault/` below the project or the explicitly configured `SYLLABLOOM_DATA_DIR`. |
 | Obsidian output | `<configured Vault>/AI-Learning/` only. Existing notes are preserved. |
 | Resource download | Only importer-recorded HTTP(S) URLs; 250 MB limit; checksum and provenance retained. |
 | GitHub work | `git clone --depth 1 --no-tags` only; no checkout mutation in a user repo, no push. |

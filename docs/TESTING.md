@@ -1,4 +1,4 @@
-# Verification record
+# Syllabloom verification record
 
 ## Automated checks
 

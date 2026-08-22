@@ -6,7 +6,7 @@ param(
 )
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$launcher = Join-Path $projectRoot "scriptsun_local.py"
+$launcher = Join-Path $projectRoot "scripts/run_local.py"
 $launcherArgs = @($launcher, "--port", $Port)
 if ($NoBrowser) { $launcherArgs += "--no-browser" }
 if ($Reload) { $launcherArgs += "--reload" }

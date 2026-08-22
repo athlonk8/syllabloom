@@ -7,6 +7,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
+def environment_value(name: str, default: str | None = None) -> str | None:
+    """Read the current Syllabloom environment name, then the legacy alias."""
+
+    return os.getenv(f"SYLLABLOOM_{name}") or os.getenv(f"PALO_{name}") or default
+
+
 class Settings:
     """Local-only runtime configuration.
 
@@ -17,17 +23,22 @@ class Settings:
     def __init__(self) -> None:
         self.app_root = Path(__file__).resolve().parents[2]
         load_dotenv(self.app_root / ".env", override=False)
-        self.data_dir = Path(os.getenv("PALO_DATA_DIR", self.app_root / "data")).expanduser().resolve()
+        self.data_dir = Path(environment_value("DATA_DIR", str(self.app_root / "data"))).expanduser().resolve()
         self.learning_vault = self.data_dir / "LearningVault"
-        self.database_url = os.getenv(
-            "PALO_DATABASE_URL", f"sqlite:///{(self.data_dir / 'learning-os.db').as_posix()}"
+        current_database = self.data_dir / "syllabloom.db"
+        legacy_database = self.data_dir / "learning-os.db"
+        default_database = legacy_database if legacy_database.is_file() and not current_database.exists() else current_database
+        self.database_url = environment_value(
+            "DATABASE_URL", f"sqlite:///{default_database.as_posix()}"
         )
-        self.watch_completion_threshold = float(os.getenv("PALO_WATCH_COMPLETION_THRESHOLD", "0.85"))
-        self.crawl_max_pages = int(os.getenv("PALO_CRAWL_MAX_PAGES", "18"))
-        self.crawl_max_depth = int(os.getenv("PALO_CRAWL_MAX_DEPTH", "1"))
+        self.watch_completion_threshold = float(environment_value("WATCH_COMPLETION_THRESHOLD", "0.85"))
+        self.crawl_max_pages = int(environment_value("CRAWL_MAX_PAGES", "18"))
+        self.crawl_max_depth = int(environment_value("CRAWL_MAX_DEPTH", "1"))
         self.frontend_origins = [
             origin.strip()
-            for origin in os.getenv("PALO_FRONTEND_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+            for origin in environment_value(
+                "FRONTEND_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+            ).split(",")
             if origin.strip()
         ]
 

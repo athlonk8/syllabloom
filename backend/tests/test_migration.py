@@ -12,7 +12,7 @@ from app.models import Base
 
 
 def test_alembic_creates_a_fresh_configured_data_directory(tmp_path, monkeypatch) -> None:
-    monkeypatch.setenv("PALO_DATA_DIR", str(tmp_path / "brand-new-data"))
+    monkeypatch.setenv("SYLLABLOOM_DATA_DIR", str(tmp_path / "brand-new-data"))
     get_settings.cache_clear()
     try:
         config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
@@ -25,7 +25,7 @@ def test_alembic_creates_a_fresh_configured_data_directory(tmp_path, monkeypatch
 
 
 def test_complete_legacy_schema_is_stamped_before_startup(tmp_path, monkeypatch) -> None:
-    monkeypatch.setenv("PALO_DATA_DIR", str(tmp_path / "legacy-data"))
+    monkeypatch.setenv("SYLLABLOOM_DATA_DIR", str(tmp_path / "legacy-data"))
     get_settings.cache_clear()
     try:
         get_settings().ensure_local_dirs()
@@ -40,7 +40,7 @@ def test_complete_legacy_schema_is_stamped_before_startup(tmp_path, monkeypatch)
 
 
 def test_complete_schema_with_empty_alembic_table_is_stamped(tmp_path, monkeypatch) -> None:
-    monkeypatch.setenv("PALO_DATA_DIR", str(tmp_path / "interrupted-migration-data"))
+    monkeypatch.setenv("SYLLABLOOM_DATA_DIR", str(tmp_path / "interrupted-migration-data"))
     get_settings.cache_clear()
     try:
         get_settings().ensure_local_dirs()

@@ -1,1 +1,1 @@
-"""Personal AI Learning OS backend package."""
+"""Syllabloom backend package."""

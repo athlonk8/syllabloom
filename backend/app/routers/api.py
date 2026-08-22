@@ -23,7 +23,7 @@ from ..services.utils import path_is_within
 from ..services.watch_progress import course_progress, finish_watch_session, latest_resume_position, record_watch_segment
 from ..services.youtube import ManualVideo, MissingYouTubeApiKeyError, YouTubeImportError, YouTubeImporter
 
-router = APIRouter(prefix="/api", tags=["learning-os"])
+router = APIRouter(prefix="/api", tags=["syllabloom"])
 settings = get_settings()
 SETTINGS_ALLOWLIST = {"YOUTUBE_API_KEY", "watch_completion_threshold", "codex_max_retries"}
 
@@ -128,7 +128,7 @@ def _course_payload(db: Session, course: Course, details: bool = False) -> dict:
 
 @router.get("/health")
 def health() -> dict:
-    return {"status": "ok", "app": "Personal AI Learning OS", "time": datetime.now(timezone.utc).isoformat()}
+    return {"status": "ok", "app": "Syllabloom", "time": datetime.now(timezone.utc).isoformat()}
 
 
 @router.get("/courses")

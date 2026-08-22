@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-import os
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .config import get_settings
+from .config import environment_value, get_settings
 from .database import init_database
 from .routers.api import router
 
@@ -22,7 +21,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="Personal AI Learning OS",
+    title="Syllabloom",
     version="0.1.0",
     description="A local-first learning workspace for publicly accessible course materials.",
     lifespan=lifespan,
@@ -39,7 +38,9 @@ app.include_router(router)
 
 def _frontend_dist() -> Path:
     project_root = Path(__file__).resolve().parents[2]
-    return Path(os.getenv("PALO_FRONTEND_DIST", project_root / "frontend" / "dist")).expanduser().resolve()
+    return Path(
+        environment_value("FRONTEND_DIST", str(project_root / "frontend" / "dist"))
+    ).expanduser().resolve()
 
 
 frontend_dist = _frontend_dist()

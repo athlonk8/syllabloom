@@ -1,93 +1,144 @@
-# Personal AI Learning OS
+# Syllabloom
 
-一个可自行托管、优先在本机运行的学习工作台。它把公开课程资料、真实观看进度、Obsidian 笔记、作业快照、可选 AI 反馈和本地证书放在同一个长期可用的系统里。
+English · [中文](README.zh-CN.md)
 
-项目不会绕过 Canvas、SSO、Gradescope、付费墙或任何访问控制；不会把 AI 生成内容伪装成官方作业；不会自动把你的资料上传到云端。
+Syllabloom is a local-first learning workspace for turning public courses into a durable, personal study practice. It combines public-course imports, genuine video-watch coverage, Obsidian notes, versioned assignment snapshots, optional AI feedback, and independent completion records in one self-hosted web app.
 
-## 用一分钟启动
+It is intended to be installed and run by the learner. No hosted Syllabloom account is required.
 
-推荐 Docker 方式：只需 Docker Desktop，不需要分别安装 Python、Node.js 或启动两个终端。
+## Why Syllabloom
 
-    git clone https://github.com/YOUR_GITHUB_USERNAME/personal-ai-learning-os.git
-    cd personal-ai-learning-os
+The name combines syllabus and bloom: a course plan becomes something you actively practice, annotate, revisit, and grow from. It is deliberately a product name rather than an operating-system label.
+
+## What it does
+
+- Imports public YouTube videos and playlists through the official YouTube Data API.
+- Imports bounded, robots-aware public Stanford course pages without bypassing access controls.
+- Tracks unique watched video intervals through the YouTube IFrame Player API. Seeking does not count as watching.
+- Keeps course records, downloads, submission snapshots, and certificates local in SQLite and the local data directory.
+- Exports a predictable AI-Learning subtree into an existing Obsidian vault. Answer.md remains the learner's source of truth.
+- Runs public official tests when they are available, then optionally requests feedback from Codex CLI or an OpenAI-compatible endpoint.
+- Generates a local independent-learning certificate only when its completion rules are met.
+- Starts with English by default. Use the English · 中文 link in the lower-left sidebar to switch the UI; the choice is retained in the browser.
+
+## What it does not do
+
+- It does not bypass Canvas, SSO, Gradescope, paywalls, authentication, or any other access control.
+- It does not scrape YouTube page HTML as an alternative to the official API.
+- It does not present AI-invented work as an official assignment.
+- It does not silently upload notes, answers, or course materials to a cloud service.
+- It does not issue a university credential or claim a relationship with Stanford or another course provider.
+
+## Quick start
+
+### Docker Desktop
+
+This is the simplest option for most users. Install and start Docker Desktop, then run the following from a terminal:
+
+    git clone https://github.com/athlonk8/syllabloom.git
+    cd syllabloom
     docker compose up --build
 
-打开 http://localhost:8080 。首次构建会花几分钟，之后只需执行 docker compose up。
+Open http://localhost:8080. The first build downloads dependencies and takes longer; later starts normally need only:
 
-也可以原生启动（适合希望使用本机 Codex CLI 的用户）。需要 Python 3.11+ 与 Node.js 22.22.2+（LTS）、24.15+ 或更新的兼容版本：
+    docker compose up
 
-    git clone https://github.com/YOUR_GITHUB_USERNAME/personal-ai-learning-os.git
-    cd personal-ai-learning-os
+Stop the service while retaining learning data:
+
+    docker compose down
+
+Do not use docker compose down --volumes unless you deliberately want to remove the Docker-managed database, downloaded materials, submissions, and certificates.
+
+### Native one-command launch
+
+Choose native launch when you want Syllabloom to use a locally installed Codex CLI. Install Python 3.11 or newer and a compatible Node.js version: 22.22.2 or newer in the 22 line, 24.15.0 or newer in the 24 line, or a newer compatible release.
+
+    git clone https://github.com/athlonk8/syllabloom.git
+    cd syllabloom
     python scripts/run_local.py
 
-脚本会创建本地虚拟环境、安装所需依赖、构建网页、执行数据库迁移，并在 http://127.0.0.1:8000 打开应用。Windows 用户也可运行 scripts/start-local.ps1。
+On Windows PowerShell, this wrapper is also available:
 
-详细的安装、停止、升级及 Docker + Obsidian 挂载说明见 [安装指南](docs/INSTALLATION.md)。
+    .\scripts\start-local.ps1
 
-## 首次配置
+The launcher creates a virtual environment, installs dependencies when they change, builds the frontend, applies safe database migrations, starts the app, and opens http://127.0.0.1:8000. Press Ctrl+C in that terminal to stop it.
 
-打开 Settings 后按需配置：
+For ports, reload mode, offline browser launching, Docker vault mounts, and upgrades, read the detailed [installation guide](docs/INSTALLATION.md).
 
-1. YouTube Data API key：仅当需要从官方 YouTube Data API 导入播放列表或视频元数据时才需要。没有 key 时可以使用手动导入；系统绝不抓取 YouTube HTML 充当替代 API。
-2. AI feedback provider：
-   - Codex CLI：原生启动时使用已经安装并登录的 Codex CLI。每次提交都会创建快照，并以只读 sandbox 启动 CLI。
-   - OpenAI-compatible endpoint：可连接 Ollama、LM Studio、vLLM、OpenAI 或其他兼容 Chat Completions 的服务。填写 base URL、模型名和可选 API key。
-   - Disabled：只运行官方公开测试，不发送 AI 请求。
-3. Obsidian Vault Path：选择已有 Vault。应用只会写入其中的 AI-Learning 子目录，并且不会覆盖你的 Answer.md。
+## First ten minutes
 
-所有 AI 反馈都要求用户在每次提交前显式勾选确认。Codex 会读取只读的作业快照；兼容接口只接收作业标题、公开描述、课程 AI 政策、官方测试摘要（如有）和拷贝出的 Answer.md。
+1. Start Syllabloom and open Settings.
+2. Add a YouTube Data API key if you want automatic YouTube playlist metadata. Without it, use Manual fallback to create a course from a public video URL.
+3. Optionally set an existing Obsidian vault path. Syllabloom writes only below that vault's AI-Learning directory and never replaces an existing Answer.md.
+4. Import a public YouTube video, playlist, or public Stanford course URL.
+5. Watch an embeddable video in the app. Progress is based on unique covered intervals, not a manual completed toggle.
+6. For an official public assignment, download the original, create your notes, edit Answer.md, and explicitly confirm an AI-feedback submission only when you want one.
 
-## 已实现的功能
+## AI providers and privacy
 
-- React、TypeScript、FastAPI、SQLite、SQLAlchemy 和 Alembic 构成的本地网页应用。
-- 官方 YouTube Data API 导入，以及使用 IFrame Player API 的视频播放、去重观看区间、断点恢复和完成度计算。
-- 有页数/深度边界、遵守 robots 规则的 Stanford 公开课程导入；受保护资源会记录来源而不会绕过认证。
-- 仅从官方课程页面直接链接的资源中解析作业；原件、个人工作区和提交快照彼此隔离。
-- Obsidian 集成，Answer.md 是网页和笔记应用共享的答案源。
-- 官方 pytest 优先的作业检查，加上可选的 Codex CLI 或 OpenAI-compatible AI 反馈。
-- 本地生成 Independent Learning Certificate；不会使用 Stanford 标志或暗示 Stanford 授权。
-- GitHub Actions CI、贡献指南、报告安全问题的流程和问题模板已包含在仓库中。
+AI feedback is optional and off from the perspective of external network use until you configure a provider and confirm a submission.
 
-## 数据与隐私
+| Provider | Best for | What it receives |
+| --- | --- | --- |
+| Codex CLI | Native launch with Codex installed and signed in on the same machine | A read-only staged assignment workspace. |
+| OpenAI-compatible endpoint | Ollama, LM Studio, vLLM, OpenAI, or another compatible Chat Completions server | Only the staged Answer.md plus bounded public assignment context and any official-test summary. |
+| Disabled | Learners who only want deterministic public tests | No AI request is made. |
 
-原生运行时，数据库、下载内容、快照和证书默认放在项目下的 data 目录。Docker 运行时，它们放在名为 palo-data 的 Docker volume 中。二者均已被 Git 忽略。
+Every AI request requires a separate acknowledgement in the assignment card. A remote compatible endpoint can have its own retention policy and pricing, so review that provider's policy before enabling it. API keys are stored locally and are never returned by the settings API.
 
-YouTube key 和 AI API key 只保存在本机 SQLite 或由你自己提供的环境变量中。设置接口只显示“已配置”，不会返回密钥。
+Codex CLI runs naturally in native mode. The standard Docker image does not bundle or authenticate the Codex CLI; Docker users can use an OpenAI-compatible endpoint such as a local Ollama or LM Studio server instead.
 
-网络访问只有在以下用户动作后发生：
+## Data, backups, and upgrades
 
-- 导入公开课程或下载其公开资源；
-- 用户主动选择的 AI 反馈提交；
-- 浏览器加载 YouTube 播放器。
+Native launch stores application data below the repository's data directory by default. Set SYLLABLOOM_DATA_DIR before starting if you prefer a different local location. Docker uses the named Syllabloom data volume. Neither location is committed to Git.
 
-完整边界见 [安全说明](docs/SECURITY.md)。
+Back up your native data directory or Docker volume before upgrading a long-running installation. To update:
 
-## 为贡献者准备
+    git pull
+    docker compose up --build
 
-原生开发：
+Or, for native launch:
 
-    python scripts/run_local.py --reload
+    git pull
+    python scripts/run_local.py
 
-后端测试：
+Database migrations run at startup. Existing legacy local databases are recognized safely; a partial or inconsistent database is not silently stamped as current.
 
-    .venv/Scripts/python -m pytest -q
+## Public-source policy
 
-前端测试和构建：
+Syllabloom makes a clear distinction between public official work, protected resources, and personal work:
 
-    cd frontend
+- Stanford imports start from the supplied public URL, obey robots rules, and crawl only a small same-host set of relevant links.
+- A login-gated resource is recorded as protected with provenance; it is not fetched through the gate.
+- An assignment is treated as official only when a public official course page directly links to it.
+- Original downloads, the editable workspace, and each submission snapshot are separated so later revisions do not overwrite the historical record.
+
+## Documentation
+
+| Guide | Purpose |
+| --- | --- |
+| [Installation guide](docs/INSTALLATION.md) | Docker and native setup, ports, Obsidian mounts, local AI endpoints, updates, and troubleshooting. |
+| [安装指南（中文）](docs/INSTALLATION.zh-CN.md) | 中文安装、配置和排错说明。 |
+| [User guide](docs/USER_GUIDE.md) | Course importing, notes, feedback, certificates, and study workflow. |
+| [用户指南（中文）](docs/USER_GUIDE.zh-CN.md) | 中文使用流程和数据边界说明。 |
+| [Architecture](docs/ARCHITECTURE.md) | Service boundaries, provenance, and trust model. |
+| [Testing record](docs/TESTING.md) | Current automated and manual verification record. |
+| [Contributing](CONTRIBUTING.md) | Development and pull-request expectations. |
+| [Security policy](SECURITY.md) | Reporting path and security boundaries. |
+
+## Development
+
+The repository uses React, TypeScript, Vite, FastAPI, SQLAlchemy, Alembic, and SQLite. Run all checks before submitting a change:
+
+    cd backend
+    ../.venv/Scripts/python -m pytest -q
+
+    cd ../frontend
     npm test
     npm run build
 
-Windows PowerShell 下后端 Python 路径为 .venv\Scripts\python.exe。更多约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+On macOS or Linux, use the platform-appropriate Python path inside .venv.
 
-## 文档
+## License
 
-- [安装指南](docs/INSTALLATION.md)
-- [用户指南](docs/USER_GUIDE.md)
-- [架构](docs/ARCHITECTURE.md)
-- [测试记录](docs/TESTING.md)
-- [安全说明](docs/SECURITY.md)
-
-## 发布前的许可证
-
-仓库已具备公开发布所需的工程文件，但许可证需要维护者明确选择后才会添加。公开创建 GitHub 仓库前，请在 MIT、Apache-2.0、GPL-3.0 或其他适合你的许可证之间做出选择。
+Syllabloom is released under the [MIT License](LICENSE).

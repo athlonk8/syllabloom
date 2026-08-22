@@ -1,4 +1,4 @@
-name: personal-ai-learning-os
+name: syllabloom
 
 services:
   app:
@@ -8,16 +8,16 @@ services:
     ports:
       - "8080:8000"
     environment:
-      PALO_DATA_DIR: /data
-      PALO_FRONTEND_DIST: /app/frontend-dist
-      PALO_FRONTEND_ORIGINS: http://localhost:8080
-      PALO_YOUTUBE_API_KEY: ${PALO_YOUTUBE_API_KEY:-}
-      PALO_AI_PROVIDER: ${PALO_AI_PROVIDER:-codex_cli}
-      PALO_AI_BASE_URL: ${PALO_AI_BASE_URL:-}
-      PALO_AI_MODEL: ${PALO_AI_MODEL:-}
-      PALO_AI_API_KEY: ${PALO_AI_API_KEY:-}
+      SYLLABLOOM_DATA_DIR: /data
+      SYLLABLOOM_FRONTEND_DIST: /app/frontend-dist
+      SYLLABLOOM_FRONTEND_ORIGINS: http://localhost:8080
+      SYLLABLOOM_YOUTUBE_API_KEY: ${SYLLABLOOM_YOUTUBE_API_KEY:-}
+      SYLLABLOOM_AI_PROVIDER: ${SYLLABLOOM_AI_PROVIDER:-codex_cli}
+      SYLLABLOOM_AI_BASE_URL: ${SYLLABLOOM_AI_BASE_URL:-}
+      SYLLABLOOM_AI_MODEL: ${SYLLABLOOM_AI_MODEL:-}
+      SYLLABLOOM_AI_API_KEY: ${SYLLABLOOM_AI_API_KEY:-}
     volumes:
-      - palo-data:/data
+      - syllabloom-data:/data
 
 volumes:
-  palo-data:
+  syllabloom-data:

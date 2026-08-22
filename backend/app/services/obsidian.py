@@ -21,7 +21,7 @@ class ObsidianWorkspace:
     """Creates only inside the user-selected AI-Learning subtree.
 
     Files are created once by default and never overwritten, so edits made in
-    Obsidian remain the authoritative version the Learning OS reads on submit.
+    Obsidian remain the authoritative version Syllabloom reads on submit.
     """
 
     def __init__(self, db: Session) -> None:
@@ -170,7 +170,7 @@ class ObsidianWorkspace:
             f"---\ncourse: {course.code or course.name}\nsource_url: {course.official_course_url or ''}\n"
             f"official: {str(course.source_type == 'stanford').lower()}\n---\n\n# {course.name}\n\n"
             "## Learning dashboard\n\n- [ ] Review this course's official source and AI policy\n- [ ] Watch required lectures\n- [ ] Complete publicly available official assignments\n\n"
-            "This folder was created by Personal AI Learning OS. Your note edits remain the source of truth.\n"
+            "This folder was created by Syllabloom. Your note edits remain the source of truth.\n"
         )
 
     @staticmethod

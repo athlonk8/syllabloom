@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
+import { translate, type Locale } from "../lib/i18n";
 import type { Lecture } from "../types/api";
 
 declare global {
@@ -57,16 +58,35 @@ function loadYouTubeIframeApi(): Promise<void> {
   });
 }
 
-export function YouTubePlayer({ lecture, onProgress }: { lecture: Lecture; onProgress: () => void }) {
+export function YouTubePlayer({
+  lecture,
+  locale,
+  onProgress,
+}: {
+  lecture: Lecture;
+  locale: Locale;
+  onProgress: () => void;
+}) {
   const mountRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayerInstance | null>(null);
   const sessionIdRef = useRef<number | null>(null);
   const lastPositionRef = useRef(0);
   const playingRef = useRef(false);
   const reportingRef = useRef(false);
+  const localeRef = useRef(locale);
+  const onProgressRef = useRef(onProgress);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState("Preparing player");
+  const [statusKey, setStatusKey] = useState("player.preparing");
   const videoId = lecture.video?.id;
+  const externalVideoId = lecture.video?.external_id;
+
+  useEffect(() => {
+    localeRef.current = locale;
+  }, [locale]);
+
+  useEffect(() => {
+    onProgressRef.current = onProgress;
+  }, [onProgress]);
 
   const reportInterval = useCallback(
     async (force = false) => {
@@ -78,6 +98,7 @@ export function YouTubePlayer({ lecture, onProgress }: { lecture: Lecture; onPro
       lastPositionRef.current = current;
       // A seek creates a discontinuity. Do not count skipped time as watched.
       if (delta <= 0 || delta > 14) return;
+
       reportingRef.current = true;
       try {
         const result = await api<{ session_id: number; completed: boolean }>("/watch/segments", {
@@ -93,39 +114,39 @@ export function YouTubePlayer({ lecture, onProgress }: { lecture: Lecture; onPro
           keepalive: force,
         });
         sessionIdRef.current = result.session_id;
-        setStatus(result.completed ? "Lecture complete" : "Tracking actual coverage");
-        onProgress();
+        setStatusKey(result.completed ? "player.complete" : "player.tracking");
+        onProgressRef.current();
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Unable to save watch progress.");
+        setError(cause instanceof Error ? cause.message : translate(localeRef.current, "player.saveError"));
       } finally {
         reportingRef.current = false;
       }
     },
-    [videoId, onProgress],
+    [videoId],
   );
 
   useEffect(() => {
-    const youtubeVideo = lecture.video;
-    if (!youtubeVideo) return;
+    if (!externalVideoId) return;
     let destroyed = false;
     let interval: number | undefined;
+
     const setup = async () => {
       try {
         await loadYouTubeIframeApi();
         if (destroyed || !mountRef.current || !window.YT?.Player) return;
         playerRef.current = new window.YT.Player(mountRef.current, {
-          videoId: youtubeVideo.external_id,
+          videoId: externalVideoId,
           playerVars: { autoplay: 0, rel: 0, modestbranding: 1, origin: window.location.origin },
           events: {
             onReady: async (event: { target: YouTubePlayerInstance }) => {
               try {
-                const resume = await api<{ resume_position_seconds: number }>(`/lectures/${lecture.id}/resume`);
+                const resume = await api<{ resume_position_seconds: number }>("/lectures/" + lecture.id + "/resume");
                 if (resume.resume_position_seconds > 2) event.target.seekTo(resume.resume_position_seconds, true);
                 lastPositionRef.current = resume.resume_position_seconds;
-                setStatus(resume.resume_position_seconds > 2 ? "Resumed from your last position" : "Ready to learn");
+                setStatusKey(resume.resume_position_seconds > 2 ? "player.resumed" : "player.ready");
               } catch {
                 lastPositionRef.current = Number(event.target.getCurrentTime()) || 0;
-                setStatus("Ready to learn");
+                setStatusKey("player.ready");
               }
             },
             onStateChange: (event: PlayerEvent) => {
@@ -144,15 +165,16 @@ export function YouTubePlayer({ lecture, onProgress }: { lecture: Lecture; onPro
               }
             },
             onError: () => {
-              setError("This video cannot be embedded or is currently unavailable. Its official source link is retained below.");
-              setStatus("Embed unavailable");
+              setError(translate(localeRef.current, "player.embedError"));
+              setStatusKey("player.embedUnavailable");
             },
           },
         });
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Unable to start the YouTube player.");
+        setError(cause instanceof Error ? cause.message : translate(localeRef.current, "player.startError"));
       }
     };
+
     void setup();
     const unload = () => void reportInterval(true);
     window.addEventListener("beforeunload", unload);
@@ -161,19 +183,19 @@ export function YouTubePlayer({ lecture, onProgress }: { lecture: Lecture; onPro
       window.removeEventListener("beforeunload", unload);
       if (interval) window.clearInterval(interval);
       void reportInterval(true);
-      if (sessionIdRef.current) void api(`/watch/sessions/${sessionIdRef.current}/finish`, { method: "POST" });
+      if (sessionIdRef.current) void api("/watch/sessions/" + sessionIdRef.current + "/finish", { method: "POST" });
       playerRef.current?.destroy();
       playerRef.current = null;
       playingRef.current = false;
       sessionIdRef.current = null;
     };
-  }, [lecture.id, lecture.video, reportInterval]);
+  }, [lecture.id, externalVideoId, reportInterval]);
 
   return (
-    <section className="player-shell" aria-label={`YouTube player: ${lecture.title}`}>
+    <section className="player-shell" aria-label={translate(locale, "player.label", { title: lecture.title })}>
       <div className="player-frame" ref={mountRef} />
       <div className="player-meta">
-        <span className="live-dot" /> {status}
+        <span className="live-dot" /> {translate(locale, statusKey)}
         {error && <span className="player-error">{error}</span>}
       </div>
     </section>

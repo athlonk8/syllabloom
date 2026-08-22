@@ -1,40 +1,114 @@
-# User Guide
+# User guide
+
+[中文](USER_GUIDE.zh-CN.md)
+
+Syllabloom is designed for study that remains understandable months later: source links remain attached, work is separated from originals, and your answer lives in a normal Markdown file you control.
+
+## A recommended study loop
+
+1. Import a public course.
+2. Watch an embeddable lecture in Syllabloom.
+3. Export notes to Obsidian when you are ready to write.
+4. For a public official assignment, download the source and create the workspace.
+5. Write or revise Answer.md yourself.
+6. Submit only when you want feedback, confirm the data boundary, and review the saved feedback.
+7. Repeat. Earlier submission snapshots remain available for comparison.
 
 ## Import a YouTube course
 
-Set a local API key in Settings, then paste a public playlist or video URL. Playlist data comes from YouTube Data API v3: title, channel, ordered videos, duration, thumbnail, description, and publication date. If there is no key, use **Manual fallback** and enter the course/video details yourself. The system does not scrape YouTube page HTML.
+Open Add course and choose YouTube API for a public video or playlist URL. Add a YouTube Data API key in Settings first if you want automatic metadata. The importer reads the official API's title, channel, ordered videos, duration, thumbnail, description, and publication data. It does not scrape the YouTube web page.
 
-The embedded player is the YouTube IFrame Player API. While it plays, the UI reports short segments. Segments caused by a seek are not treated as watched coverage. The latest recorded point is used to resume a later session.
+If a key is unavailable, choose Manual fallback, enter a course name and a public video URL, and begin with that video. Manual fallback is deliberately limited: it does not claim to reconstruct a playlist from web-page scraping.
+
+The player uses YouTube's IFrame Player API. While playing, it periodically records short watch intervals. A large jump forward is treated as a seek and is not counted as covered material. Repeated or overlapping intervals are merged, so replaying a segment does not inflate progress. The most recent saved position is used when a lecture is opened later.
+
+Some videos cannot be embedded because the publisher disables embeds or removes the video. Syllabloom preserves the official source link and shows that the embed is unavailable; it does not redirect you automatically.
 
 ## Import a Stanford course
 
-Paste a public `*.stanford.edu` course URL. The importer:
+Choose Stanford URL and paste a public Stanford course page. The importer:
 
-1. checks the course host's robots policy;
-2. fetches only the supplied page and selected same-host schedule, lecture, material, and assignment links within a small configurable bound;
-3. records PDFs, notebooks, GitHub, slides, notes, readings, assignments, and protected links with source-page provenance;
-4. does not follow Canvas/SSO/Gradescope login gates.
+1. Checks the host's robots policy.
+2. Fetches the supplied page and a small bounded set of selected same-host course, schedule, lecture, material, and assignment links.
+3. Records discovered slides, PDFs, notebooks, GitHub links, readings, assignments, and protected resources with source-page provenance.
+4. Stops at Canvas, SSO, Gradescope, and other authentication boundaries.
 
-An access-gated page is retained as a protected source with `Requires Stanford authentication`; it is not silently omitted and it is not accessed.
+A page that appears login-gated is retained as a protected source. It is visible in the provenance area as requiring Stanford authentication, but is not fetched through the login screen or omitted from the record.
 
-## Official assignments and notes
+The import bounds are configurable with SYLLABLOOM_CRAWL_MAX_PAGES and SYLLABLOOM_CRAWL_MAX_DEPTH. Keeping them small makes imports predictable and respectful of source websites.
 
-Use **Download original** only for an assignment marked official. The app stores its original files separately from `workspace/`. If an Obsidian vault is configured, **Create notes** creates an `AI-Learning/<course>/Assignments/...` folder. `Answer.md` is your shared source of truth: edit it in Obsidian or another editor, then submit it from the web app.
+## Understand sources and assignments
 
-## Grading and revision
+Syllabloom does not guess whether a resource is official. A resource is treated as an official assignment only when a public official course page directly links to it. The course page, resource URL, access state, local path, checksum when downloaded, and other provenance fields remain associated with the record.
 
-The submit control remains disabled until you affirm the AI-submission notice. This is intentional. On submission the system stages an immutable snapshot and first runs public pytest tests when present.
+The course view separates three things:
 
-Choose the provider in Settings:
+- Official source material: a link or downloaded original from the public source.
+- Personal workspace: a local place to write and test your own answer.
+- Submission snapshot: an immutable copy made at the time you request feedback.
 
-- Codex CLI receives a read-only staging workspace and is instructed to provide progressive feedback rather than a complete solution.
-- An OpenAI-compatible provider receives only the staged Answer.md, public assignment context, course AI policy, and any official-test summary. It never receives a writable local path.
-- Disabled leaves deterministic public tests available without making an AI request.
+This separation means an edit to Answer.md after a submission does not alter an earlier snapshot or its feedback.
 
-Every AI request still requires a separate, explicit confirmation in the assignment card. The application never silently submits an answer to any configured provider.
+## Use Obsidian safely
 
-The app keeps v1, v2, and later submissions. Re-open your existing `Answer.md`, revise it, and submit again; no earlier snapshot is overwritten.
+Set an existing vault path in Settings, then use Export Obsidian notes or Create notes on an assignment. Syllabloom creates only its AI-Learning subtree. A typical assignment includes:
+
+    AI-Learning/
+      course-name/
+        Assignments/
+          assignment-key/
+            Assignment.md
+            Answer.md
+            Feedback.md
+
+Answer.md is shared between Syllabloom and Obsidian. Edit it in either place. If Answer.md already exists, Syllabloom preserves it rather than overwriting it.
+
+For Docker installations, the vault must first be mounted into the container. See the [installation guide](INSTALLATION.md#docker-and-obsidian).
+
+## Download and prepare official work
+
+For an unprotected official assignment:
+
+1. Select Download original. The app records files below its local LearningVault and keeps originals separate from your workspace.
+2. Select Create notes. This creates the Obsidian files when a vault is configured and prepares the local workspace.
+3. Select Open workspace if you want your operating system to open the validated local directory.
+
+Protected assignments are intentionally not downloadable. Their course provenance remains visible so you know why no action is available.
+
+## Get feedback
+
+Select a provider in Settings before submitting.
+
+| Provider | Workflow |
+| --- | --- |
+| Codex CLI | Native launch stages a copy of the assignment and runs Codex in a read-only sandbox. |
+| OpenAI-compatible | The app sends a bounded request containing the staged Answer.md, public assignment context, policy text, and official-test summary when present. |
+| Disabled | No AI review is requested. |
+
+The acknowledgement checkbox is required for every submission. This is not a one-time global consent. It confirms that you intend to send the current staged snapshot to the configured provider.
+
+When public tests are available, they run before optional AI feedback. Feedback is intended to be progressive and review-oriented rather than a complete solution. If you use a remote provider, it may have costs and its own privacy policy.
+
+Use Show grading history to see snapshots and grades. Revise your Answer.md and submit again to create a later version; the prior versions stay intact.
 
 ## Certificates
 
-Completion requires configured video coverage and passed, publicly available required official assignments. Mastery additionally enforces per-assignment and average score thresholds. A certificate says that it is an independent learning credential and is not Stanford-issued, sponsored, endorsed, or accredited.
+Syllabloom can create a local independent-learning certificate after the course meets its completion policy. Completion normally requires the configured unique video coverage threshold and passing any required public official assignments. Mastery rules, when configured, can also require assignment and average-score thresholds.
+
+The certificate is not university-issued, accredited, sponsored, or endorsed. It does not display a university logo or claim official course credit.
+
+## Language and accessibility
+
+English is the first-run language. Use English or 中文 in the sidebar footer at any time. Course titles, source descriptions, and material provided by external sites are retained as supplied; changing the UI language does not translate third-party course content.
+
+The language controls are real links with a lang query parameter, so a saved or shared URL can request a language directly.
+
+## Keep a healthy local record
+
+- Back up the native data directory or Docker volume periodically.
+- Keep your Obsidian vault backed up independently; it is your working knowledge base.
+- Keep API keys out of screenshots, issues, commits, and shared .env files.
+- Verify imported sources before treating them as course requirements.
+- Revisit history instead of overwriting past work when you want to compare learning progress.
+
+See [Installation](INSTALLATION.md) for configuration and recovery, and [Architecture](ARCHITECTURE.md) for the trust and provenance model.

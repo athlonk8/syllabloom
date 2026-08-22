@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -10,7 +9,7 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..config import get_settings
+from ..config import environment_value, get_settings
 from ..models import Course, CourseSource, Lecture, Module, Video
 from .utils import extract_youtube_playlist_id, extract_youtube_video_id
 
@@ -68,7 +67,7 @@ class YouTubeImporter:
         setting = self.db.scalar(select(AppSetting).where(AppSetting.key == "YOUTUBE_API_KEY"))
         if setting is not None:
             return setting.value.strip() or None
-        return os.getenv("PALO_YOUTUBE_API_KEY") or None
+        return environment_value("YOUTUBE_API_KEY") or None
 
     def import_url(self, url: str) -> Course:
         playlist_id = extract_youtube_playlist_id(url)

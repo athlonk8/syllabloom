@@ -1,4 +1,4 @@
-# Architecture
+# Syllabloom architecture
 
 ```mermaid
 flowchart LR

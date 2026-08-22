@@ -12,8 +12,8 @@ FROM python:3.12-slim AS application
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PALO_DATA_DIR=/data \
-    PALO_FRONTEND_DIST=/app/frontend-dist
+    SYLLABLOOM_DATA_DIR=/data \
+    SYLLABLOOM_FRONTEND_DIST=/app/frontend-dist
 
 WORKDIR /app
 COPY backend/requirements.txt ./

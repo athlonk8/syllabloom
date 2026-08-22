@@ -144,7 +144,7 @@ class CertificateService:
             Paragraph(
                 f"Based on publicly available materials from: {course.code or course.name} {course.version or ''}".strip(), body
             ),
-            Paragraph("Completed through: Personal AI Learning OS", body),
+            Paragraph("Completed through: Syllabloom", body),
             Spacer(1, 11 * mm),
         ]
         table = Table(
