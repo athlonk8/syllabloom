@@ -4,6 +4,8 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 
 class Settings:
     """Local-only runtime configuration.
@@ -14,6 +16,7 @@ class Settings:
 
     def __init__(self) -> None:
         self.app_root = Path(__file__).resolve().parents[2]
+        load_dotenv(self.app_root / ".env", override=False)
         self.data_dir = Path(os.getenv("PALO_DATA_DIR", self.app_root / "data")).expanduser().resolve()
         self.learning_vault = self.data_dir / "LearningVault"
         self.database_url = os.getenv(

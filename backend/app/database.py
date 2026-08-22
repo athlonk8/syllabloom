@@ -25,8 +25,7 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_database() -> None:
-    """Create tables for first launch; Alembic owns future schema upgrades."""
-    settings.ensure_local_dirs()
-    from .models import Base
+    """Ensure a direct uvicorn launch gets the same safe migrations as the launcher."""
+    from .migrations import upgrade_database
 
-    Base.metadata.create_all(bind=engine)
+    upgrade_database()

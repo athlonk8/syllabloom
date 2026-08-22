@@ -12,10 +12,11 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..database import get_db
 from ..models import AppSetting, Assignment, Certificate, CertificatePolicy, Course, Grade, ImportJob, ObsidianConfig, Resource, Submission, Video, WatchSession
-from ..schemas import AppSettingUpdate, CertificateRequest, CourseCreate, GradeRequest, ManualCourseImport, ObsidianConfigUpdate, StanfordImportRequest, WatchSegmentCreate, YouTubeImportRequest
+from ..schemas import AIProviderConfigUpdate, AppSettingUpdate, CertificateRequest, CourseCreate, GradeRequest, ManualCourseImport, ObsidianConfigUpdate, StanfordImportRequest, WatchSegmentCreate, YouTubeImportRequest
 from ..services.assignments import OfficialAssignmentDownloader
+from ..services.ai_providers import AIProviderConfigurationError, public_ai_provider_config, save_ai_provider_config
 from ..services.certificates import CertificateError, CertificateService
-from ..services.grader import CloudSubmissionAcknowledgementRequired, CodexGrader, GradingError
+from ..services.grader import AssignmentGrader, CloudSubmissionAcknowledgementRequired, GradingError
 from ..services.obsidian import ObsidianError, ObsidianWorkspace
 from ..services.stanford import StanfordGenericImporter, StanfordImportError
 from ..services.utils import path_is_within
@@ -299,9 +300,9 @@ def prepare_assignment_workspace(assignment_id: int, db: Session = Depends(get_d
 def submit_assignment(assignment_id: int, payload: GradeRequest, db: Session = Depends(get_db)) -> dict:
     assignment = _assignment(db, assignment_id)
     try:
-        grader = CodexGrader(db)
+        grader = AssignmentGrader(db)
         submission = grader.create_submission(assignment)
-        runs = grader.grade(submission, run_official_tests=payload.run_official_tests, run_codex_review=payload.run_codex_review, acknowledge_cloud_submission=payload.acknowledge_cloud_submission)
+        runs = grader.grade(submission, run_official_tests=payload.run_official_tests, run_ai_review=payload.run_ai_review, acknowledge_cloud_submission=payload.acknowledge_cloud_submission)
         _commit(db)
         return {"submission_id": submission.id, "version": submission.version, "runs": [{"id": run.id, "provider": run.provider, "status": run.status, "result": run.result} for run in runs]}
     except CloudSubmissionAcknowledgementRequired as exc:
@@ -360,7 +361,39 @@ def update_obsidian_vault(payload: ObsidianConfigUpdate, db: Session = Depends(g
 
 @router.get("/settings/codex")
 def codex_status() -> dict:
-    return CodexGrader.environment_status()
+    return AssignmentGrader.environment_status()
+
+
+def _ai_provider_status(db: Session) -> dict:
+    try:
+        provider = public_ai_provider_config(db)
+    except AIProviderConfigurationError as exc:
+        provider = {
+            "provider": "invalid",
+            "base_url": None,
+            "model": None,
+            "api_key_configured": False,
+            "uses_network": False,
+            "error": str(exc),
+        }
+    provider["codex"] = AssignmentGrader.environment_status()
+    return provider
+
+
+@router.get("/settings/ai-provider")
+def get_ai_provider_settings(db: Session = Depends(get_db)) -> dict:
+    return _ai_provider_status(db)
+
+
+@router.put("/settings/ai-provider")
+def update_ai_provider_settings(payload: AIProviderConfigUpdate, db: Session = Depends(get_db)) -> dict:
+    try:
+        save_ai_provider_config(db, payload)
+        _commit(db)
+        return _ai_provider_status(db)
+    except AIProviderConfigurationError as exc:
+        db.rollback()
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/courses/{course_id}/certificate-eligibility/{certificate_type}")

@@ -23,7 +23,15 @@ Use **Download original** only for an assignment marked official. The app stores
 
 ## Grading and revision
 
-The submit control remains disabled until you affirm the cloud-submission notice. This is intentional. On submission the system stages copies of originals, starter material, user workspace, and the current Answer.md. It first runs public pytest tests when present. Codex receives a read-only workspace and is instructed to provide progressive feedback rather than a complete solution.
+The submit control remains disabled until you affirm the AI-submission notice. This is intentional. On submission the system stages an immutable snapshot and first runs public pytest tests when present.
+
+Choose the provider in Settings:
+
+- Codex CLI receives a read-only staging workspace and is instructed to provide progressive feedback rather than a complete solution.
+- An OpenAI-compatible provider receives only the staged Answer.md, public assignment context, course AI policy, and any official-test summary. It never receives a writable local path.
+- Disabled leaves deterministic public tests available without making an AI request.
+
+Every AI request still requires a separate, explicit confirmation in the assignment card. The application never silently submits an answer to any configured provider.
 
 The app keeps v1, v2, and later submissions. Re-open your existing `Answer.md`, revise it, and submit again; no earlier snapshot is overwritten.
 

@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { YouTubePlayer } from "./components/YouTubePlayer";
-import { api, apiBase, ApiError } from "./lib/api";
+import { api, ApiError } from "./lib/api";
 import { formatPercent, formatSeconds } from "./lib/format";
 import type { Assignment, Course, Dashboard, Lecture } from "./types/api";
 
@@ -10,6 +10,17 @@ const PRESETS = [
   { label: "Stanford CS224N", type: "stanford", url: "https://web.stanford.edu/class/cs224n/" },
   { label: "Stanford CS336", type: "stanford", url: "https://cs336.stanford.edu/" },
 ];
+
+type AIProviderName = "codex_cli" | "openai_compatible" | "disabled";
+type AIProviderStatus = {
+  provider: AIProviderName | "invalid";
+  base_url: string | null;
+  model: string | null;
+  api_key_configured: boolean;
+  uses_network: boolean;
+  error?: string;
+  codex: { installed: boolean; version?: string; error?: string };
+};
 
 function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong.";
@@ -68,11 +79,21 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
   const [youtubeKey, setYoutubeKey] = useState("");
   const [vaultPath, setVaultPath] = useState("");
   const [threshold, setThreshold] = useState("0.85");
+  const [provider, setProvider] = useState<AIProviderName>("codex_cli");
+  const [baseUrl, setBaseUrl] = useState("");
+  const [model, setModel] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [apiKeyConfigured, setApiKeyConfigured] = useState(false);
+  const [clearApiKey, setClearApiKey] = useState(false);
   const [codex, setCodex] = useState<{ installed: boolean; version?: string; error?: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   useEffect(() => { void (async () => {
-    const [settings, codexStatus] = await Promise.all([api<{ obsidian_vault_path: string | null; watch_completion_threshold: number }>("/settings"), api<{ installed: boolean; version?: string; error?: string }>("/settings/codex")]);
-    setVaultPath(settings.obsidian_vault_path || ""); setThreshold(String(settings.watch_completion_threshold)); setCodex(codexStatus);
+    const [settings, aiStatus] = await Promise.all([api<{ obsidian_vault_path: string | null; watch_completion_threshold: number }>("/settings"), api<AIProviderStatus>("/settings/ai-provider")]);
+    const nextProvider: AIProviderName = aiStatus.provider === "codex_cli" || aiStatus.provider === "openai_compatible" || aiStatus.provider === "disabled" ? aiStatus.provider : "disabled";
+    setVaultPath(settings.obsidian_vault_path || ""); setThreshold(String(settings.watch_completion_threshold));
+    setProvider(nextProvider); setBaseUrl(aiStatus.base_url || ""); setModel(aiStatus.model || "");
+    setApiKeyConfigured(aiStatus.api_key_configured); setCodex(aiStatus.codex);
+    if (aiStatus.error) setNotice(aiStatus.error);
   })().catch((cause) => setNotice(messageFrom(cause))); }, []);
   const save = async (event: FormEvent) => {
     event.preventDefault(); setNotice(null);
@@ -80,6 +101,15 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
       if (youtubeKey.trim()) await api("/settings/value/YOUTUBE_API_KEY", { method: "PUT", body: JSON.stringify({ value: youtubeKey, is_secret: true }) });
       await api("/settings/value/watch_completion_threshold", { method: "PUT", body: JSON.stringify({ value: threshold }) });
       if (vaultPath.trim()) await api("/settings/obsidian", { method: "PUT", body: JSON.stringify({ vault_path: vaultPath, create_if_missing: false }) });
+      const providerPayload: { provider: AIProviderName; base_url?: string; model?: string; api_key?: string; clear_api_key?: boolean } = { provider };
+      if (provider === "openai_compatible") {
+        providerPayload.base_url = baseUrl;
+        providerPayload.model = model;
+        if (apiKey.trim()) providerPayload.api_key = apiKey;
+        if (clearApiKey) providerPayload.clear_api_key = true;
+      }
+      const aiStatus = await api<AIProviderStatus>("/settings/ai-provider", { method: "PUT", body: JSON.stringify(providerPayload) });
+      setApiKey(""); setClearApiKey(false); setApiKeyConfigured(aiStatus.api_key_configured); setCodex(aiStatus.codex);
       setNotice("Local settings saved.");
     } catch (cause) { setNotice(messageFrom(cause)); }
   };
@@ -88,6 +118,15 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
     <label>YouTube Data API key<input value={youtubeKey} onChange={(event) => setYoutubeKey(event.target.value)} type="password" placeholder="Stored only in local SQLite" autoComplete="off" /></label>
     <label>Obsidian Vault Path<input value={vaultPath} onChange={(event) => setVaultPath(event.target.value)} placeholder="D:\Obsidian\AI-Learning" /></label>
     <label>Watch completion threshold<input value={threshold} onChange={(event) => setThreshold(event.target.value)} type="number" min="0.01" max="1" step="0.01" /></label>
+    <label>AI feedback provider<select value={provider} onChange={(event) => setProvider(event.target.value as AIProviderName)}><option value="codex_cli">Codex CLI (local installation)</option><option value="openai_compatible">OpenAI-compatible endpoint</option><option value="disabled">Disabled — official tests only</option></select></label>
+    {provider === "openai_compatible" && <div className="provider-fields">
+      <label>Compatible API base URL<input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} required placeholder="http://localhost:11434/v1" /></label>
+      <label>Model<input value={model} onChange={(event) => setModel(event.target.value)} required placeholder="e.g. qwen2.5:7b or gpt-4.1-mini" /></label>
+      <label>API key (optional for local servers)<input value={apiKey} onChange={(event) => setApiKey(event.target.value)} type="password" placeholder={apiKeyConfigured ? "A local key is already saved" : "Leave blank for Ollama or LM Studio"} autoComplete="off" /></label>
+      {apiKeyConfigured && <label className="checkbox-row"><input type="checkbox" checked={clearApiKey} onChange={(event) => setClearApiKey(event.target.checked)} /> Remove the saved local API key</label>}
+      <p className="hint">Works with Ollama, LM Studio, vLLM, OpenAI, and other Chat Completions-compatible endpoints. A remote endpoint can receive the staged answer only after each explicit submission confirmation.</p>
+    </div>}
+    {provider === "disabled" && <p className="hint">AI feedback is off. You can still run any public official tests that come with an assignment.</p>}
     <p className="hint">The configured vault must already exist. The app writes only under its `AI-Learning` subfolder and never overwrites Answer.md.</p>
     <div className="codex-status"><strong>Codex CLI</strong><span className={codex?.installed ? "status-good" : "status-warn"}>{codex ? (codex.installed ? codex.version : codex.error) : "Checking…"}</span></div>
     {notice && <p className={notice === "Local settings saved." ? "notice" : "inline-error"}>{notice}</p>}<button className="primary-button">Save local settings</button>
@@ -109,8 +148,8 @@ function AssignmentCard({ assignment, refresh, notify }: { assignment: Assignmen
     <div className="assignment-heading"><div><span className="tag">{assignment.key}</span><h4>{assignment.title}</h4></div><span className={`assignment-status ${assignment.status}`}>{assignment.status.replaceAll("_", " ")}</span></div>
     <p>{assignment.description || "Official assignment resource detected from the course source."}</p>
     {assignment.protected_resource ? <p className="protected">Requires Stanford authentication - recorded, not accessed.</p> : <div className="button-row"><button disabled={busy} onClick={() => void invoke(`/assignments/${assignment.id}/download`)}>Download original</button><button disabled={busy} onClick={() => void invoke(`/assignments/${assignment.id}/prepare-workspace`)}>Create notes</button>{assignment.local_root && <button disabled={busy} onClick={() => void invoke(`/assignments/${assignment.id}/open-workspace`)}>Open workspace</button>}</div>}
-    <label className="acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} /> I explicitly approve sending this staged snapshot to my configured Codex provider for feedback.</label>
-    <button className="primary-button compact" disabled={busy || !acknowledged || assignment.protected_resource} onClick={() => void invoke(`/assignments/${assignment.id}/submit`, { run_official_tests: true, run_codex_review: true, acknowledge_cloud_submission: true })}>Submit to Codex</button>
+    <label className="acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} /> I explicitly approve sending this staged snapshot to my configured AI provider for feedback.</label>
+    <button className="primary-button compact" disabled={busy || !acknowledged || assignment.protected_resource} onClick={() => void invoke(`/assignments/${assignment.id}/submit`, { run_official_tests: true, run_ai_review: true, acknowledge_cloud_submission: true })}>Submit for AI feedback</button>
     <button className="text-button" onClick={() => void loadHistory()}>Show grading history</button>
     {history && <div className="grading-history">{history.length ? history.map((item) => <p key={item.version}>v{item.version}: {item.grades.map((grade) => `${grade.score ?? "-"} (${grade.score_type}, ${grade.status})`).join(" · ") || "No grade yet"}</p>) : <p>No submissions yet.</p>}</div>}
   </article>;
@@ -127,7 +166,7 @@ function CourseWorkspace({ course, onRefresh, notify }: { course: Course; onRefr
   const certificate = async () => {
     const name = window.prompt("Learner name for the independent learning certificate:"); if (!name) return;
     setCreatingCertificate(true);
-    try { const result = await api<{ download_url: string; certificate_id: string }>(`/courses/${course.id}/certificates`, { method: "POST", body: JSON.stringify({ certificate_type: "completion", learner_name: name }) }); window.open(`${apiBase}${result.download_url}`, "_blank", "noopener"); notify(`Certificate ${result.certificate_id} generated locally.`); await onRefresh(); }
+    try { const result = await api<{ download_url: string; certificate_id: string }>(`/courses/${course.id}/certificates`, { method: "POST", body: JSON.stringify({ certificate_type: "completion", learner_name: name }) }); window.open(result.download_url, "_blank", "noopener"); notify(`Certificate ${result.certificate_id} generated locally.`); await onRefresh(); }
     catch (cause) { notify(messageFrom(cause)); } finally { setCreatingCertificate(false); }
   };
   return <main className="workspace">

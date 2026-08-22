@@ -9,5 +9,6 @@ The application is intentionally local-first. Its only automatic writes are unde
 | Resource download | Only importer-recorded HTTP(S) URLs; 250 MB limit; checksum and provenance retained. |
 | GitHub work | `git clone --depth 1 --no-tags` only; no checkout mutation in a user repo, no push. |
 | Codex grading | User click and acknowledgement; copied workspace; `codex exec --sandbox read-only --ask-for-approval never`. |
+| OpenAI-compatible grading | User click and acknowledgement; only the copied Answer.md, public assignment context, AI policy, and official-test summary are posted to the user-configured endpoint. |
 
 The app never implements authentication bypass, cookie replay, login emulation, paywall circumvention, broad-domain crawling, public mirroring, automatic publishing, or Git push.

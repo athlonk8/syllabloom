@@ -8,7 +8,7 @@ Run from `backend/`:
 ..\.venv\Scripts\pytest.exe -q
 ```
 
-Current result: **13 passed**. Coverage includes watch-interval merging, true completion threshold, three distinct Stanford importer fixtures, protected-link treatment, Obsidian `Answer.md` preservation, grading schema parsing, API progress persistence, fresh-directory Alembic migration, settings-route isolation, and real PDF construction/text extraction.
+Current result: **19 passed**. Coverage includes watch-interval merging, true completion threshold, three distinct Stanford importer fixtures, protected-link treatment, Obsidian `Answer.md` preservation, grading schema parsing, OpenAI-compatible provider request construction, secret masking, API progress persistence, fresh-directory and legacy-schema Alembic migration, settings-route isolation, and real PDF construction/text extraction.
 
 Run from `frontend/`:
 
@@ -39,4 +39,4 @@ For CS336, `Assignment 1 : Basics` was actually shallow-cloned from the public o
 
 - The CS336 temporary Obsidian test created `Assignment.md`, `Answer.md`, and `Feedback.md`. A user-style edit was then made to `Answer.md`; the service reread that same file successfully.
 - `codex --version`, `codex --help`, and `codex exec --help` were inspected. This installed CLI supports `exec`, `--sandbox read-only`, `--output-schema`, and `--output-last-message`.
-- No real course answer was sent to Codex during validation because sending it would require the user's explicit in-app acknowledgement. The deterministic parser, schema validation, and read-only command construction are covered by automated tests.
+- No real course answer was sent to Codex or another provider during validation because sending it would require the user's explicit in-app acknowledgement. The deterministic parser, schema validation, read-only command construction, and mocked compatible-provider request construction are covered by automated tests.

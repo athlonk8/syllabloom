@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Literal
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
 
 class ORMModel(BaseModel):
@@ -64,6 +65,29 @@ class AppSettingUpdate(BaseModel):
     is_secret: bool = False
 
 
+class AIProviderConfigUpdate(BaseModel):
+    provider: Literal["codex_cli", "openai_compatible", "disabled"]
+    base_url: str | None = Field(default=None, max_length=500)
+    model: str | None = Field(default=None, max_length=300)
+    api_key: str | None = Field(default=None, max_length=10_000)
+    clear_api_key: bool = False
+
+    @model_validator(mode="after")
+    def validate_openai_compatible_fields(self) -> "AIProviderConfigUpdate":
+        self.base_url = self.base_url.strip() if self.base_url is not None else None
+        self.model = self.model.strip() if self.model is not None else None
+        if self.provider != "openai_compatible":
+            return self
+        if not self.base_url or not self.model:
+            raise ValueError("OpenAI-compatible feedback requires both a base URL and a model.")
+        parsed = urlparse(self.base_url)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("OpenAI-compatible base URL must be a complete http(s) URL.")
+        if parsed.username or parsed.password or parsed.query or parsed.fragment:
+            raise ValueError("Base URL cannot contain credentials, query parameters, or fragments.")
+        return self
+
+
 class ObsidianConfigUpdate(BaseModel):
     vault_path: str = Field(min_length=1)
     create_if_missing: bool = False
@@ -86,7 +110,10 @@ class GradeResult(BaseModel):
 
 class GradeRequest(BaseModel):
     run_official_tests: bool = True
-    run_codex_review: bool = True
+    run_ai_review: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("run_ai_review", "run_codex_review"),
+    )
     acknowledge_cloud_submission: bool = False
 
 

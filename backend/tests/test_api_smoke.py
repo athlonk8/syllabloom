@@ -26,3 +26,19 @@ def test_explicit_obsidian_settings_route_is_not_captured_by_generic_setting(tmp
         )
         assert response.status_code == 200, response.text
         assert response.json()["enabled"] is True
+
+
+def test_ai_provider_settings_mask_secret_values() -> None:
+    with TestClient(app) as client:
+        response = client.put(
+            "/api/settings/ai-provider",
+            json={
+                "provider": "openai_compatible",
+                "base_url": "http://localhost:11434/v1",
+                "model": "qwen2.5:7b",
+                "api_key": "not-returned",
+            },
+        )
+        assert response.status_code == 200, response.text
+        assert response.json()["api_key_configured"] is True
+        assert "not-returned" not in response.text

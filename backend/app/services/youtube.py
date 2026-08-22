@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -65,7 +66,9 @@ class YouTubeImporter:
         from ..models import AppSetting
 
         setting = self.db.scalar(select(AppSetting).where(AppSetting.key == "YOUTUBE_API_KEY"))
-        return setting.value if setting and setting.value.strip() else None
+        if setting is not None:
+            return setting.value.strip() or None
+        return os.getenv("PALO_YOUTUBE_API_KEY") or None
 
     def import_url(self, url: str) -> Course:
         playlist_id = extract_youtube_playlist_id(url)

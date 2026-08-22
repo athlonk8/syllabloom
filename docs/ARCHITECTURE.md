@@ -8,7 +8,7 @@ flowchart LR
   API --> IMP["Public-course importers"]
   API --> VAULT["LearningVault filesystem"]
   API --> OBS["Configured Obsidian AI-Learning subtree"]
-  API --> GRADE["Official tests + optional Codex CLI"]
+  API --> GRADE["Official tests + optional AI provider"]
   API --> PDF["Local certificate PDF"]
   IMP --> YT["YouTube Data API"]
   IMP --> STAN["Bounded Stanford public pages"]
@@ -23,7 +23,7 @@ flowchart LR
 | Stanford | `stanford.py` | Starts from one URL, follows selected same-host pages only, respects robots and authentication boundaries. |
 | Official work | `assignments.py` | An external assignment is official only when a public official course page links to it; provenance remains attached. |
 | Notes | `obsidian.py` | The app writes only below the configured Vault's `AI-Learning/` subtree and never overwrites an existing generated note. |
-| Grading | `grader.py` | Original files and answers are copied into a temporary grading workspace; Codex uses `--sandbox read-only`. |
+| Grading | `grader.py` | Codex uses a copied, read-only workspace. OpenAI-compatible providers receive a copied Answer.md and bounded assignment context only. |
 | Certificates | `certificates.py` | Eligibility is calculated from progress and public assignment records; the PDF never claims university accreditation. |
 
 ## Data model and provenance
@@ -50,5 +50,5 @@ The original folder is write-once in normal workflow. Every submitted `Answer.md
 - Import requests are read-only HTTP requests to user-supplied public course sources.
 - Download requires a user click and is restricted to resources recorded by the importer.
 - GitHub download is shallow clone only and never pushes or edits a remote.
-- Codex review requires an explicit UI acknowledgement because a configured Codex provider may receive the staged snapshot.
+- AI review requires an explicit UI acknowledgement. Codex receives a read-only staged workspace; compatible endpoints receive only the bounded request payload described above.
 - Opening a workspace uses a user-clicked endpoint and accepts only a validated LearningVault child path.
