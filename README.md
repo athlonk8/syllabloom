@@ -13,12 +13,13 @@ The name combines syllabus and bloom: a course plan becomes something you active
 ## What it does
 
 - Imports public YouTube videos and playlists through the official YouTube Data API.
-- Lets a learner attach a direct Bilibili BV video URL to any lecture and play it through Bilibili's own iframe player. Such sources are explicitly marked learner-selected and third-party; they are never presented as official course material.
+- Lets a learner attach a direct Bilibili BV video URL to any lecture and play it through Bilibili's own iframe player. The player offers a first-party Bilibili sign-in link, refresh, in-page fullscreen, and an "Open HD on Bilibili" fallback. Syllabloom never handles Bilibili passwords or cookies; available quality remains controlled by Bilibili, the video, the account, and browser cookie settings. Such sources are explicitly marked learner-selected and third-party; they are never presented as official course material.
 - Imports bounded, robots-aware public Stanford course pages without bypassing access controls.
 - Tracks unique watched video intervals through the YouTube IFrame Player API. Seeking does not count as watching.
 - Keeps course records, downloads, submission snapshots, and certificates local in SQLite and the local data directory.
-- Exports a predictable AI-Learning subtree into an existing Obsidian vault. Answer.md remains the learner's source of truth.
-- Runs public official tests when they are available, then optionally requests feedback from Codex CLI or an OpenAI-compatible endpoint.
+- Shows every imported assignment in an in-browser workbench with the public prompt, linked resources, a Markdown answer editor, local draft saving, and version history.
+- Exports a predictable AI-Learning subtree into an existing Obsidian vault. Answer.md remains the learner's source of truth and the web editor writes to that same file when Obsidian is configured.
+- Creates an immutable local submission snapshot before any AI request, then optionally requests detailed learning feedback from Codex CLI or an OpenAI-compatible endpoint.
 - Generates a local independent-learning certificate only when its completion rules are met.
 - Starts with English by default. Use the English · 中文 link in the lower-left sidebar to switch the UI; the choice is retained in the browser.
 - Follows the system color preference on first use, with a persistent Light/Dark switch in the sidebar footer.
@@ -74,7 +75,7 @@ For ports, reload mode, offline browser launching, Docker vault mounts, and upgr
 3. Optionally set an existing Obsidian vault path. Syllabloom writes only below that vault's AI-Learning directory and never replaces an existing Answer.md.
 4. Import a public YouTube video, playlist, or public Stanford course URL. You can also expand **Use a Bilibili source** beneath any lecture and paste a direct BV video URL.
 5. Watch an embeddable video in the app. Progress is based on unique covered intervals, not a manual completed toggle.
-6. For an official public assignment, download the original, create your notes, edit Answer.md, and explicitly confirm an AI-feedback submission only when you want one.
+6. Open an assignment card. Write in the browser (or in the shared Obsidian Answer.md), save a local draft, then create a local submission version. Select that exact version and explicitly confirm before requesting AI feedback.
 
 ## AI providers and privacy
 
@@ -86,7 +87,7 @@ AI feedback is optional and off from the perspective of external network use unt
 | OpenAI-compatible endpoint | Ollama, LM Studio, vLLM, OpenAI, or another compatible Chat Completions server | Only the staged Answer.md plus bounded public assignment context and any official-test summary. |
 | Disabled | Learners who only want deterministic public tests | No AI request is made. |
 
-Every AI request requires a separate acknowledgement in the assignment card. A remote compatible endpoint can have its own retention policy and pricing, so review that provider's policy before enabling it. API keys are stored locally and are never returned by the settings API.
+Every AI request requires a separate acknowledgement in the assignment workbench. A submission version is saved first, so the feedback result always refers to a stable local snapshot. A remote compatible endpoint can have its own retention policy and pricing, so review that provider's policy before enabling it. API keys are stored locally and are never returned by the settings API.
 
 Codex CLI runs naturally in native mode. The standard Docker image does not bundle or authenticate the Codex CLI; Docker users can use an OpenAI-compatible endpoint such as a local Ollama or LM Studio server instead.
 

@@ -120,7 +120,13 @@ class ObsidianWorkspace:
             .order_by(LearningNote.id.desc())
         ).first()
         if answer_note and Path(answer_note.path).is_file():
-            return Path(answer_note.path)
+            candidate = Path(answer_note.path).resolve()
+            try:
+                vault = Path(self.get_config().vault_path).resolve()
+            except ObsidianError:
+                vault = None
+            if vault and path_is_within(candidate, vault):
+                return candidate
         try:
             return Path(self.create_assignment_workspace(assignment)["answer"])
         except ObsidianError:
@@ -129,13 +135,62 @@ class ObsidianWorkspace:
             if not path_is_within(workspace, self.settings.learning_vault):
                 raise ObsidianError("Refusing to create a workspace outside LearningVault.")
             workspace.mkdir(parents=True, exist_ok=True)
+            assignment.local_root = str(root)
             answer = workspace / "Answer.md"
             self._write_if_absent(answer, f"# My Answer - {assignment.title}\n\n")
             return answer
 
+    def read_assignment_answer(self, assignment: Assignment) -> dict[str, str]:
+        """Return the learner-owned answer without exposing arbitrary file reads."""
+
+        answer = self.local_assignment_answer_path(assignment).resolve()
+        return {
+            "content": answer.read_text(encoding="utf-8", errors="replace"),
+            "path": str(answer),
+            "storage": "obsidian" if self._is_obsidian_path(answer) else "local",
+        }
+
+    def write_assignment_answer(self, assignment: Assignment, content: str) -> dict[str, str]:
+        """Atomically persist an answer in the managed local or Obsidian workspace."""
+
+        if "\x00" in content:
+            raise ObsidianError("An answer cannot contain null characters.")
+        answer = self.local_assignment_answer_path(assignment).resolve()
+        if not self._is_managed_answer_path(answer):
+            raise ObsidianError("Refusing to write outside the managed assignment workspace.")
+        temporary = answer.with_name(f".{answer.name}.syllabloom-writing")
+        if not path_is_within(temporary, answer.parent):
+            raise ObsidianError("Unable to create a safe temporary answer file.")
+        temporary.write_text(content, encoding="utf-8")
+        temporary.replace(answer)
+        return {"content": content, "path": str(answer), "storage": "obsidian" if self._is_obsidian_path(answer) else "local"}
+
+    def local_submission_root(self, assignment: Assignment) -> Path:
+        """Create the local, app-owned root used for immutable submission snapshots.
+
+        An Obsidian vault can live anywhere the learner chooses, whereas
+        submission snapshots always remain under Syllabloom's LearningVault.
+        """
+
+        root = Path(assignment.local_root or self._local_assignment_root(assignment)).resolve()
+        if not path_is_within(root, self.settings.learning_vault):
+            raise ObsidianError("Refusing to create submission records outside LearningVault.")
+        root.mkdir(parents=True, exist_ok=True)
+        assignment.local_root = str(root)
+        return root
+
     def _local_assignment_root(self, assignment: Assignment) -> Path:
         course = assignment.course
         return self.settings.learning_vault / f"{slugify(course.code or course.name)}_{slugify(course.version or 'current')}" / "assignments" / slugify(assignment.key)
+
+    def _is_obsidian_path(self, path: Path) -> bool:
+        try:
+            return path_is_within(path, Path(self.get_config().vault_path).resolve())
+        except ObsidianError:
+            return False
+
+    def _is_managed_answer_path(self, path: Path) -> bool:
+        return path_is_within(path, self.settings.learning_vault) or self._is_obsidian_path(path)
 
     @staticmethod
     def _write_if_absent(path: Path, content: str) -> None:

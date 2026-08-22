@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from app.database import SessionLocal
 from app.main import app
+from app.models import Assignment
 
 
 def test_manual_course_watch_progress_survives_api_round_trip() -> None:
@@ -67,3 +69,48 @@ def test_ai_provider_settings_mask_secret_values() -> None:
         assert response.status_code == 200, response.text
         assert response.json()["api_key_configured"] is True
         assert "not-returned" not in response.text
+
+
+def test_assignment_workbench_saves_a_local_answer_then_creates_an_immutable_snapshot() -> None:
+    with TestClient(app) as client:
+        imported = client.post(
+            "/api/imports/manual-youtube",
+            json={
+                "name": "Assignment workbench test course",
+                "videos": [{"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "title": "Lecture"}],
+            },
+        )
+        assert imported.status_code == 201, imported.text
+        course_id = imported.json()["course"]["id"]
+        with SessionLocal() as db:
+            assignment = Assignment(
+                course_id=course_id,
+                title="Explain the invariant",
+                key="A1",
+                description="Give a concise argument for the loop invariant.",
+                official=True,
+            )
+            db.add(assignment)
+            db.commit()
+            assignment_id = assignment.id
+
+        opened = client.get(f"/api/assignments/{assignment_id}/workspace")
+        assert opened.status_code == 200, opened.text
+        assert opened.json()["storage"] in {"local", "obsidian"}
+        assert "My Answer" in opened.json()["answer"]
+
+        answer = "# My Answer\n\nThe invariant holds before and after every iteration.\n"
+        saved = client.put(f"/api/assignments/{assignment_id}/workspace", json={"content": answer})
+        assert saved.status_code == 200, saved.text
+        assert saved.json()["answer"] == answer
+        assert saved.json()["assignment"]["status"] == "in_progress"
+
+        snapshot = client.post(f"/api/assignments/{assignment_id}/submissions")
+        assert snapshot.status_code == 201, snapshot.text
+        assert snapshot.json()["version"] == 1
+        assert snapshot.json()["grades"] == []
+
+        history = client.get(f"/api/assignments/{assignment_id}/history")
+        assert history.status_code == 200, history.text
+        assert len(history.json()["submissions"]) == 1
+        assert history.json()["submissions"][0]["version"] == 1

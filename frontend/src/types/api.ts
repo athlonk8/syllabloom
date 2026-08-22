@@ -62,9 +62,77 @@ export interface Assignment {
   source_page_url: string | null;
   official: boolean;
   protected_resource: boolean;
+  requirement_level?: string;
   status: string;
   local_root: string | null;
+  rubric_url?: string | null;
+  ai_policy?: string | null;
   resources: Resource[];
+}
+
+export interface GradeCriterion {
+  title: string;
+  score: number | null;
+  max_score: number | null;
+  feedback: string;
+}
+
+export interface GradeResult {
+  score?: number;
+  score_type?: string;
+  confidence?: number;
+  conceptual_understanding?: number;
+  reasoning?: number;
+  technical_accuracy?: number;
+  clarity?: number;
+  strengths?: string[];
+  issues?: string[];
+  critical_errors?: string[];
+  suggested_review_topics?: string[];
+  summary?: string;
+  detailed_feedback?: string;
+  rubric_breakdown?: GradeCriterion[];
+  status?: string;
+  error?: string;
+}
+
+export interface Grade {
+  id: number;
+  score: number | null;
+  score_type: string;
+  confidence: number | null;
+  status: string;
+  result: GradeResult;
+  created_at?: string;
+}
+
+export interface GradingRun {
+  id: number;
+  provider: string;
+  status: string;
+  result: GradeResult;
+  stdout: string | null;
+  stderr: string | null;
+  runtime_seconds?: number | null;
+  created_at?: string;
+}
+
+export interface Submission {
+  id: number;
+  version: number;
+  status: string;
+  submitted_at: string;
+  grades: Grade[];
+  runs: GradingRun[];
+}
+
+export interface AssignmentWorkspace {
+  assignment: Assignment;
+  answer: string;
+  answer_path: string;
+  storage: "local" | "obsidian";
+  history: Submission[];
+  saved_at?: string;
 }
 
 export interface Course {

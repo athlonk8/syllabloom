@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..database import get_db
 from ..models import AppSetting, Assignment, Certificate, CertificatePolicy, Course, CourseSource, Grade, ImportJob, Lecture, ObsidianConfig, Resource, Submission, Video, WatchSession
-from ..schemas import AIProviderConfigUpdate, AppSettingUpdate, BilibiliLectureSourceUpdate, CertificateRequest, CourseCreate, GradeRequest, ManualCourseImport, ObsidianConfigUpdate, StanfordImportRequest, WatchSegmentCreate, YouTubeImportRequest
+from ..schemas import AIProviderConfigUpdate, AppSettingUpdate, AssignmentAnswerUpdate, BilibiliLectureSourceUpdate, CertificateRequest, CourseCreate, GradeRequest, ManualCourseImport, ObsidianConfigUpdate, StanfordImportRequest, WatchSegmentCreate, YouTubeImportRequest
 from ..services.assignments import OfficialAssignmentDownloader
 from ..services.ai_providers import AIProviderConfigurationError, public_ai_provider_config, save_ai_provider_config
 from ..services.certificates import CertificateError, CertificateService
@@ -78,6 +78,65 @@ def _resource(resource: Resource) -> dict:
     }
 
 
+def _assignment_payload(item: Assignment) -> dict:
+    return {
+        "id": item.id,
+        "key": item.key,
+        "title": item.title,
+        "description": item.description,
+        "official_url": item.official_url,
+        "source_page_url": item.source_page_url,
+        "official": item.official,
+        "protected_resource": item.protected_resource,
+        "requirement_level": item.requirement_level,
+        "status": item.status,
+        "local_root": item.local_root,
+        "rubric_url": item.rubric_url,
+        "ai_policy": item.ai_policy,
+        "resources": [_resource(link.resource) for link in item.resources],
+    }
+
+
+def _grade_payload(grade: Grade) -> dict:
+    return {
+        "id": grade.id,
+        "score": grade.score,
+        "score_type": grade.score_type,
+        "confidence": grade.confidence,
+        "status": grade.status,
+        "result": grade.result,
+        "created_at": grade.created_at,
+    }
+
+
+def _run_payload(run) -> dict:
+    return {
+        "id": run.id,
+        "provider": run.provider,
+        "status": run.status,
+        "result": run.result,
+        "stdout": run.stdout,
+        "stderr": run.stderr,
+        "runtime_seconds": run.runtime_seconds,
+        "created_at": run.created_at,
+    }
+
+
+def _submission_payload(submission: Submission) -> dict:
+    return {
+        "id": submission.id,
+        "version": submission.version,
+        "status": submission.status,
+        "submitted_at": submission.submitted_at,
+        "grades": [_grade_payload(grade) for grade in sorted(submission.grades, key=lambda item: item.id)],
+        "runs": [_run_payload(run) for run in sorted(submission.grading_runs, key=lambda item: item.id)],
+    }
+
+
+def _assignment_history_payload(assignment: Assignment) -> list[dict]:
+    return [_submission_payload(item) for item in sorted(assignment.submissions, key=lambda item: item.version, reverse=True)]
+
+
 def _course_payload(db: Session, course: Course, details: bool = False) -> dict:
     payload = {
         "id": course.id,
@@ -119,10 +178,7 @@ def _course_payload(db: Session, course: Course, details: bool = False) -> dict:
         for item in course.sources
     ]
     payload["resources"] = [_resource(item) for item in course.resources]
-    payload["assignments"] = [
-        {"id": item.id, "key": item.key, "title": item.title, "description": item.description, "official_url": item.official_url, "source_page_url": item.source_page_url, "official": item.official, "protected_resource": item.protected_resource, "status": item.status, "local_root": item.local_root, "resources": [_resource(link.resource) for link in item.resources]}
-        for item in sorted(course.assignments, key=lambda item: item.order_index)
-    ]
+    payload["assignments"] = [_assignment_payload(item) for item in sorted(course.assignments, key=lambda item: item.order_index)]
     return payload
 
 
@@ -358,6 +414,90 @@ def prepare_assignment_workspace(assignment_id: int, db: Session = Depends(get_d
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
+@router.get("/assignments/{assignment_id}/workspace")
+def get_assignment_workspace(assignment_id: int, db: Session = Depends(get_db)) -> dict:
+    """Open a managed answer file for the in-browser assignment workbench."""
+
+    assignment = _assignment(db, assignment_id)
+    try:
+        answer = ObsidianWorkspace(db).read_assignment_answer(assignment)
+        _commit(db)
+    except (ObsidianError, OSError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "assignment": _assignment_payload(assignment),
+        "answer": answer["content"],
+        "answer_path": answer["path"],
+        "storage": answer["storage"],
+        "history": _assignment_history_payload(assignment),
+    }
+
+
+@router.put("/assignments/{assignment_id}/workspace")
+def save_assignment_workspace(
+    assignment_id: int, payload: AssignmentAnswerUpdate, db: Session = Depends(get_db)
+) -> dict:
+    """Save a learner draft before any external provider is invoked."""
+
+    assignment = _assignment(db, assignment_id)
+    try:
+        answer = ObsidianWorkspace(db).write_assignment_answer(assignment, payload.content)
+        if payload.content.strip() and assignment.status == "not_started":
+            assignment.status = "in_progress"
+        _commit(db)
+    except (ObsidianError, OSError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "assignment": _assignment_payload(assignment),
+        "answer": answer["content"],
+        "answer_path": answer["path"],
+        "storage": answer["storage"],
+        "saved_at": datetime.now(timezone.utc),
+    }
+
+
+@router.post("/assignments/{assignment_id}/submissions", status_code=201)
+def create_assignment_submission(assignment_id: int, db: Session = Depends(get_db)) -> dict:
+    """Make an immutable local snapshot without sending it to an AI provider."""
+
+    assignment = _assignment(db, assignment_id)
+    try:
+        submission = AssignmentGrader(db).create_submission(assignment)
+        assignment.status = "submitted"
+        _commit(db)
+        return _submission_payload(submission)
+    except (GradingError, ObsidianError, OSError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/submissions/{submission_id}/grade")
+def grade_saved_submission(submission_id: int, payload: GradeRequest, db: Session = Depends(get_db)) -> dict:
+    """Grade exactly one already-saved snapshot through the configured provider."""
+
+    submission = db.get(Submission, submission_id)
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found.")
+    try:
+        AssignmentGrader(db).grade(
+            submission,
+            run_official_tests=payload.run_official_tests,
+            run_ai_review=payload.run_ai_review,
+            acknowledge_cloud_submission=payload.acknowledge_cloud_submission,
+        )
+        _commit(db)
+        db.refresh(submission)
+        return _submission_payload(submission)
+    except CloudSubmissionAcknowledgementRequired as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except (GradingError, ObsidianError, OSError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
 @router.post("/assignments/{assignment_id}/submit")
 def submit_assignment(assignment_id: int, payload: GradeRequest, db: Session = Depends(get_db)) -> dict:
     assignment = _assignment(db, assignment_id)
@@ -378,8 +518,7 @@ def submit_assignment(assignment_id: int, payload: GradeRequest, db: Session = D
 @router.get("/assignments/{assignment_id}/history")
 def assignment_history(assignment_id: int, db: Session = Depends(get_db)) -> dict:
     assignment = _assignment(db, assignment_id)
-    submissions = db.scalars(select(Submission).where(Submission.assignment_id == assignment.id).order_by(Submission.version.asc())).all()
-    return {"assignment_id": assignment.id, "status": assignment.status, "submissions": [{"id": submission.id, "version": submission.version, "status": submission.status, "submitted_at": submission.submitted_at, "grades": [{"id": grade.id, "score": grade.score, "score_type": grade.score_type, "status": grade.status, "result": grade.result} for grade in submission.grades], "runs": [{"id": run.id, "provider": run.provider, "status": run.status, "result": run.result, "stdout": run.stdout, "stderr": run.stderr} for run in submission.grading_runs]} for submission in submissions]}
+    return {"assignment_id": assignment.id, "status": assignment.status, "submissions": _assignment_history_payload(assignment)}
 
 
 @router.get("/settings")

@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
+import { AssignmentWorkspace } from "./components/AssignmentWorkspace";
 import { BilibiliPlayer } from "./components/BilibiliPlayer";
 import { YouTubePlayer } from "./components/YouTubePlayer";
 import { api, ApiError } from "./lib/api";
@@ -263,11 +264,13 @@ function AssignmentCard({
   refresh,
   notify,
   t,
+  onOpen,
 }: {
   assignment: Assignment;
   refresh: () => Promise<void>;
   notify: (message: string) => void;
   t: Translator;
+  onOpen: () => void;
 }) {
   const [acknowledged, setAcknowledged] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -302,6 +305,7 @@ function AssignmentCard({
         <span className={"assignment-status " + assignment.status}>{assignmentStatus(assignment.status, t)}</span>
       </div>
       <p>{assignment.description || t("assignment.defaultDescription")}</p>
+      <button className="primary-button compact assignment-workspace-button" onClick={onOpen}>{t("assignment.open")}</button>
       {assignment.protected_resource ? (
         <p className="protected">{t("assignment.protected")}</p>
       ) : (
@@ -412,11 +416,16 @@ function CourseWorkspace({
 }) {
   const lectures = course.lectures || [];
   const [lectureId, setLectureId] = useState<number | null>(lectures[0]?.id ?? null);
+  const [assignmentWorkspaceId, setAssignmentWorkspaceId] = useState<number | null>(null);
   const [creatingCertificate, setCreatingCertificate] = useState(false);
 
-  useEffect(() => setLectureId(lectures[0]?.id ?? null), [course.id]);
+  useEffect(() => {
+    setLectureId(lectures[0]?.id ?? null);
+    setAssignmentWorkspaceId(null);
+  }, [course.id]);
 
   const lecture = lectures.find((item) => item.id === lectureId) || lectures[0];
+  const assignmentWorkspace = (course.assignments || []).find((item) => item.id === assignmentWorkspaceId) || null;
   const lectureProgress = useMemo(
     () => new Map(course.progress.lectures.map((item) => [item.lecture_id, item])),
     [course.progress.lectures],
@@ -530,7 +539,7 @@ function CourseWorkspace({
         <div><p className="eyebrow">{t("course.officialWork")}</p><h2>{t("course.assignments")}</h2></div>
         <div className="assignment-grid">
           {(course.assignments || []).length
-            ? course.assignments?.map((item) => <AssignmentCard key={item.id} assignment={item} refresh={onRefresh} notify={notify} t={t} />)
+            ? course.assignments?.map((item) => <AssignmentCard key={item.id} assignment={item} refresh={onRefresh} notify={notify} t={t} onOpen={() => setAssignmentWorkspaceId(item.id)} />)
             : <div className="empty-card"><h3>{t("course.noAssignments")}</h3><p>{t("course.noAssignmentsDescription")}</p></div>}
         </div>
       </section>
@@ -555,6 +564,16 @@ function CourseWorkspace({
           <p className="empty-note">{t("course.noResources")}</p>
         )}
       </section>
+      {assignmentWorkspace && (
+        <AssignmentWorkspace
+          assignment={assignmentWorkspace}
+          locale={locale}
+          t={t}
+          onClose={() => setAssignmentWorkspaceId(null)}
+          onRefresh={onRefresh}
+          notify={notify}
+        />
+      )}
     </main>
   );
 }

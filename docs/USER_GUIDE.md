@@ -24,6 +24,12 @@ The player uses YouTube's IFrame Player API. While playing, it periodically reco
 
 Some videos cannot be embedded because the publisher disables embeds or removes the video. Syllabloom preserves the official source link and shows that the embed is unavailable; it does not redirect you automatically.
 
+## Use a Bilibili source and your own account
+
+Expand **Use a Bilibili source** below a lecture and paste a direct `BV...` video URL. This creates a learner-selected, third-party source; it does not turn that video into official course material.
+
+The embedded Bilibili player requests Bilibili's high-quality mode, but the actual quality menu is controlled by Bilibili, the selected video, your account entitlement, network conditions, and browser privacy settings. Use **Sign in to Bilibili** to open Bilibili's own first-party login page. Syllabloom never receives a password, QR code, or cookie. After sign-in, return and use **Refresh player**; Bilibili may make your logged-in options available in the iframe. Use **Open HD on Bilibili** when your browser blocks third-party cookies or you want Bilibili's full first-party player. The in-page **Full screen** button expands the player without leaving the course workspace.
+
 ## Import a Stanford course
 
 Choose Stanford URL and paste a public Stanford course page. The importer:
@@ -75,9 +81,13 @@ For an unprotected official assignment:
 
 Protected assignments are intentionally not downloadable. Their course provenance remains visible so you know why no action is available.
 
-## Get feedback
+## Write, save, and get feedback
 
-Select a provider in Settings before submitting.
+Open an assignment card to use the in-browser workbench. Its left panel preserves the public assignment brief and resource links; the right panel is a Markdown answer editor. The editor writes either to the configured Obsidian `Answer.md` or to Syllabloom's local `LearningVault` when Obsidian is not configured.
+
+Use **Save draft** as often as you want. Then use **Save submission version** to make an immutable local snapshot. Saving a snapshot does not send it to Codex, OpenAI, Stanford, or a course platform. Select an exact saved version from the local history, tick the acknowledgement, then choose **Grade with configured Codex**. The result panel shows its AI-estimated score, confidence, capability dimensions, detailed explanation, requirement-by-requirement feedback when available, strengths, issues, and topics to revisit.
+
+Select a provider in Settings before requesting feedback.
 
 | Provider | Workflow |
 | --- | --- |
@@ -85,11 +95,11 @@ Select a provider in Settings before submitting.
 | OpenAI-compatible | The app sends a bounded request containing the staged Answer.md, public assignment context, policy text, and official-test summary when present. |
 | Disabled | No AI review is requested. |
 
-The acknowledgement checkbox is required for every submission. This is not a one-time global consent. It confirms that you intend to send the current staged snapshot to the configured provider.
+The acknowledgement checkbox is required for every grading request. This is not a one-time global consent. It confirms that you intend to send the selected staged snapshot to the configured provider. The feedback result remains attached to that snapshot, even after you revise the current answer.
 
 When public tests are available, they run before optional AI feedback. Feedback is intended to be progressive and review-oriented rather than a complete solution. If you use a remote provider, it may have costs and its own privacy policy.
 
-Use Show grading history to see snapshots and grades. Revise your Answer.md and submit again to create a later version; the prior versions stay intact.
+Use the saved-version list to revisit snapshots and grades. Revise your Answer.md and create another version when ready; the prior versions stay intact.
 
 ## Certificates
 

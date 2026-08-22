@@ -98,6 +98,26 @@ class ObsidianConfigUpdate(BaseModel):
     create_if_missing: bool = False
 
 
+class AssignmentAnswerUpdate(BaseModel):
+    """The learner-owned Markdown saved by the assignment workbench."""
+
+    content: str = Field(default="", max_length=500_000)
+
+
+class GradeCriterion(BaseModel):
+    """One transparent part of an AI feedback result.
+
+    The fields are optional because many public course pages do not publish a
+    point-by-point rubric.  When one is absent, Codex should use descriptive
+    feedback instead of inventing official point values.
+    """
+
+    title: str = Field(min_length=1, max_length=300)
+    score: float | None = Field(default=None, ge=0, le=100)
+    max_score: float | None = Field(default=None, gt=0, le=100)
+    feedback: str = Field(default="", max_length=8_000)
+
+
 class GradeResult(BaseModel):
     score: float = Field(ge=0, le=100)
     score_type: Literal["official_tests", "official_rubric", "deterministic", "ai_estimated"]
@@ -110,6 +130,9 @@ class GradeResult(BaseModel):
     issues: list[str] = Field(default_factory=list)
     critical_errors: list[str] = Field(default_factory=list)
     suggested_review_topics: list[str] = Field(default_factory=list)
+    summary: str = Field(default="", max_length=8_000)
+    detailed_feedback: str = Field(default="", max_length=20_000)
+    rubric_breakdown: list[GradeCriterion] = Field(default_factory=list)
     status: Literal["PASS", "NEEDS_REVISION", "ERROR"]
 
 
