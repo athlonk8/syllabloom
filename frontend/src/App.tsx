@@ -557,7 +557,12 @@ function CourseWorkspace({
         <div className="assignment-grid">
           {(course.assignments || []).length
             ? course.assignments?.map((item) => <AssignmentCard key={item.id} assignment={item} refresh={onRefresh} notify={notify} t={t} onOpen={() => setAssignmentWorkspaceId(item.id)} />)
-            : <div className="empty-card"><h3>{t("course.noAssignments")}</h3><p>{t("course.noAssignmentsDescription")}</p></div>}
+            : (
+              <div className="empty-card">
+                <h3>{course.source_type === "bilibili_manual" ? t("course.noAssignmentsBilibili") : t("course.noAssignments")}</h3>
+                <p>{course.source_type === "bilibili_manual" ? t("course.noAssignmentsBilibiliDescription") : t("course.noAssignmentsDescription")}</p>
+              </div>
+            )}
         </div>
       </section>
       <section className="resource-section provenance">
