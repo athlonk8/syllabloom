@@ -166,3 +166,40 @@ export interface Dashboard {
   certificates: Array<{ id: number; certificate_id: string; type: string; course_id: number }>;
   streak_days: number;
 }
+
+export interface BilibiliSession {
+  logged_in: boolean;
+  mid: number | null;
+  uname: string | null;
+  vip_status: number | null;
+}
+
+export interface BilibiliQuality {
+  id: number;
+  label: string;
+}
+
+export interface BilibiliPlayback {
+  bvid: string;
+  cid: number;
+  page: number;
+  pages_total: number;
+  title: string;
+  part: string;
+  duration_seconds: number | null;
+  timelength_ms: number | null;
+  quality_id: number;
+  qualities: BilibiliQuality[];
+  logged_in: boolean;
+  stream_url: string;
+}
+
+export interface BilibiliQrCode {
+  qrcode_key: string;
+  qr_svg: string;
+}
+
+export interface BilibiliQrPollResult {
+  status: "waiting" | "scanned" | "confirmed" | "expired" | "unknown";
+  session?: BilibiliSession;
+}

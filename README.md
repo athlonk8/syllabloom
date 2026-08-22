@@ -13,7 +13,7 @@ The name combines syllabus and bloom: a course plan becomes something you active
 ## What it does
 
 - Imports public YouTube videos and playlists through the official YouTube Data API.
-- Lets a learner attach a direct Bilibili BV video URL to any lecture and play it through Bilibili's own iframe player. **Sign in and return to player** opens Bilibili's first-party sign-in page in the current tab and returns to the same course and embedded player after sign-in; it then reloads the iframe automatically. The player offers refresh and in-page fullscreen, but no app-owned link opens the Bilibili website. The iframe is sandboxed so it cannot navigate the surrounding learning page or open a new tab. Syllabloom never handles Bilibili passwords or cookies. Available quality remains controlled by Bilibili's external player: a quality menu entry is not confirmation that Bilibili will serve that stream in an embed. Bilibili's own in-player quality prompt can remain visible, but cannot take the outer course page away. Such sources are explicitly marked learner-selected and third-party; they are never presented as official course material.
+- Adds a course by default from a pasted Bilibili link: the app parses the BV identifier, reads public part metadata, and splits multi-part (multi-P) videos into one lecture per part. Playback runs in the built-in HTML5 player with QR sign-in and quality switching. Such sources are explicitly marked as learner-selected third-party content, never as official course material.
 - Imports bounded, robots-aware public Stanford course pages without bypassing access controls.
 - Tracks unique watched video intervals through the YouTube IFrame Player API. Seeking does not count as watching.
 - Keeps course records, downloads, submission snapshots, and certificates local in SQLite and the local data directory.
@@ -73,7 +73,7 @@ For ports, reload mode, offline browser launching, Docker vault mounts, and upgr
 1. Start Syllabloom and open Settings.
 2. Add a YouTube Data API key if you want automatic YouTube playlist metadata. Without it, use Manual fallback to create a course from a public video URL.
 3. Optionally set an existing Obsidian vault path. Syllabloom writes only below that vault's AI-Learning directory and never replaces an existing Answer.md.
-4. Import a public YouTube video, playlist, or public Stanford course URL. You can also expand **Use a Bilibili source** beneath any lecture and paste a direct BV video URL.
+4. Import a public course: paste a Bilibili link by default (multi-P videos split automatically), or use the YouTube Data API or a public Stanford course URL. Existing lectures can still switch sources through **Use a Bilibili source**.
 5. Watch an embeddable video in the app. Progress is based on unique covered intervals, not a manual completed toggle.
 6. Open an assignment card. Write in the browser (or in the shared Obsidian Answer.md), save a local draft, then create a local submission version. Select that exact version and explicitly confirm before requesting AI feedback.
 
@@ -114,7 +114,7 @@ Syllabloom makes a clear distinction between public official work, protected res
 - Stanford imports start from the supplied public URL, obey robots rules, and crawl only a small same-host set of relevant links.
 - A login-gated resource is recorded as protected with provenance; it is not fetched through the gate.
 - An assignment is treated as official only when a public official course page directly links to it.
-- A Bilibili link added by a learner is stored as a third-party source with its provenance. Syllabloom does not copy it, infer authorization, or bypass any Bilibili access rule.
+- A Bilibili link added by a learner is stored as a third-party source with its provenance. Playback uses only the learner's own signed-in entitlements through Bilibili's official web endpoints; Syllabloom does not bypass any Bilibili access rule.
 - Original downloads, the editable workspace, and each submission snapshot are separated so later revisions do not overwrite the historical record.
 
 ## Documentation
@@ -124,7 +124,7 @@ Syllabloom makes a clear distinction between public official work, protected res
 | [Installation guide](docs/INSTALLATION.md) | Docker and native setup, ports, Obsidian mounts, local AI endpoints, updates, and troubleshooting. |
 | [安装指南（中文）](docs/INSTALLATION.zh-CN.md) | 中文安装、配置和排错说明。 |
 | [User guide](docs/USER_GUIDE.md) | Course importing, notes, feedback, certificates, and study workflow. |
-| [Feature tour](docs/FEATURE_TOUR.md) | Screenshot tour of the core interface, Bilibili return flow, and local study workflow. |
+| [Feature tour](docs/FEATURE_TOUR.md) | Screenshot tour of the core interface, the Bilibili QR sign-in flow, and the local study workflow. |
 | [功能图文说明（中文）](docs/FEATURE_TOUR.zh-CN.md) | 中文截图说明与学习流程。 |
 | [用户指南（中文）](docs/USER_GUIDE.zh-CN.md) | 中文使用流程和数据边界说明。 |
 | [Architecture](docs/ARCHITECTURE.md) | Service boundaries, provenance, and trust model. |

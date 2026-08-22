@@ -14,9 +14,9 @@ The dashboard is a local index of the courses you import. It keeps course progre
 
 ![Bilibili in-page player after the login return](images/02-bilibili-login-return-en.jpg)
 
-The Bilibili video remains inside the course workspace. **Sign in and return to player** opens Bilibili's first-party sign-in page in the current tab. Its return target includes the current course and lecture, so after a successful Bilibili sign-in it returns to this exact course, scrolls back to the player, removes the one-time return parameters from the URL, and reloads the in-page iframe. Syllabloom never reads a Bilibili password, QR code, or cookie.
+The Bilibili video plays in Syllabloom's own HTML5 player inside the course workspace. The quality menu lists the tiers Bilibili returns for your account, and switching keeps the playback position. **Scan to sign in** shows the official Bilibili QR code inside the page; scanning it with the mobile app signs you in without leaving Syllabloom. Session cookies stay in the local database — they are never displayed or uploaded — and watch progress counts toward course completion like YouTube lectures. Anonymous playback is usually capped around 480P; signed-in playback uses your own account's entitlements.
 
-The screenshot exercises that post-login return path locally; no Bilibili account was used to produce it. Bilibili still decides the quality choices that an account and a specific video can use. Syllabloom deliberately does not offer an external Bilibili-playback button: the iframe is sandboxed without popup or top-navigation permission, so it cannot take the surrounding learning page away from the course. If Bilibili's own player shows a “watch in Bilibili” prompt for a quality it declines to serve in an embed, that provider decision remains visible but cannot navigate the outer course page.
+The committed screenshot captures an earlier iframe-based build; re-capture this screen after signing in to show the quality menu with your own account's tiers.
 
 ## 3. Write an assignment in the browser
 
@@ -57,7 +57,7 @@ Import a public YouTube video or playlist through the official YouTube Data API,
 ## A safe study workflow
 
 1. Import a public course and verify its source links.
-2. Watch an embeddable lecture in the page. For Bilibili, sign in through Bilibili's own page and return to the embedded player.
+2. Watch an embeddable lecture in the page. For Bilibili, scan the in-page QR code to sign in, then pick a quality from the menu.
 3. Open an assignment, write locally, and save a draft or immutable version.
 4. Configure Codex CLI or a compatible AI provider only if you want feedback.
 5. Select a saved version and explicitly confirm before requesting feedback. Results remain attached to that local snapshot.

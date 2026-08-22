@@ -4,17 +4,18 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Response
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..database import get_db
 from ..models import AppSetting, Assignment, Certificate, CertificatePolicy, Course, CourseSource, Grade, ImportJob, Lecture, ObsidianConfig, Resource, Submission, Video, WatchSession
-from ..schemas import AIProviderConfigUpdate, AppSettingUpdate, AssignmentAnswerUpdate, BilibiliLectureSourceUpdate, CertificateRequest, CourseCreate, GradeRequest, ManualCourseImport, ObsidianConfigUpdate, StanfordImportRequest, WatchSegmentCreate, YouTubeImportRequest
-from ..services.assignments import OfficialAssignmentDownloader
+from ..schemas import AIProviderConfigUpdate, AppSettingUpdate, AssignmentAnswerUpdate, BilibiliImportRequest, BilibiliLectureSourceUpdate, BilibiliQrPollRequest, CertificateRequest, CourseCreate, GradeRequest, ManualCourseImport, ObsidianConfigUpdate, StanfordImportRequest, WatchSegmentCreate, YouTubeImportRequest
 from ..services.ai_providers import AIProviderConfigurationError, public_ai_provider_config, save_ai_provider_config
+from ..services.assignments import OfficialAssignmentDownloader
+from ..services.bilibili import BilibiliError, BilibiliService, open_media_stream
 from ..services.certificates import CertificateError, CertificateService
 from ..services.grader import AssignmentGrader, CloudSubmissionAcknowledgementRequired, GradingError
 from ..services.obsidian import ObsidianError, ObsidianWorkspace
@@ -272,6 +273,96 @@ def set_bilibili_lecture_source(
         )
     _commit(db)
     return {"course": _course_payload(db, lecture.course, details=True)}
+
+
+
+
+@router.get("/bilibili/session")
+def bilibili_session(db: Session = Depends(get_db)) -> dict:
+    """Login state only; cookies never leave the local database."""
+    return BilibiliService(db).session_status()
+
+
+@router.delete("/bilibili/session", status_code=204)
+def bilibili_logout(db: Session = Depends(get_db)) -> Response:
+    BilibiliService(db).clear_session()
+    _commit(db)
+    return Response(status_code=204)
+
+
+@router.get("/bilibili/login/qrcode")
+def bilibili_login_qrcode(db: Session = Depends(get_db)) -> dict:
+    try:
+        return BilibiliService(db).login_qrcode()
+    except BilibiliError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.post("/bilibili/login/poll")
+def bilibili_login_poll(payload: BilibiliQrPollRequest, db: Session = Depends(get_db)) -> dict:
+    service = BilibiliService(db)
+    try:
+        result = service.login_poll(payload.qrcode_key)
+    except BilibiliError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    _commit(db)
+    if result.get("status") == "confirmed":
+        result["session"] = service.session_status()
+    return result
+
+
+@router.get("/bilibili/videos/{bvid}")
+def bilibili_video(bvid: str, db: Session = Depends(get_db)) -> dict:
+    try:
+        return BilibiliService(db).video_info(bvid)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except BilibiliError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.get("/bilibili/playurl")
+def bilibili_playurl(
+    bvid: str, page: int = 1, qn: int | None = None, db: Session = Depends(get_db)
+) -> dict:
+    try:
+        return BilibiliService(db).playback(bvid, page=page, qn=qn)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except BilibiliError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.get("/bilibili/stream")
+def bilibili_stream(url: str, request: Request) -> StreamingResponse:
+    """Range-preserving in-memory relay for one validated media CDN URL."""
+    try:
+        proxied = open_media_stream(url, request.headers.get("range"))
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except BilibiliError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    headers = {**proxied.headers, "Cache-Control": "no-store"}
+    return StreamingResponse(proxied.iterator, status_code=proxied.status_code, headers=headers)
+
+
+
+@router.post("/imports/manual-bilibili", status_code=201)
+def import_manual_bilibili(payload: BilibiliImportRequest, db: Session = Depends(get_db)) -> dict:
+    """Parse a learner-provided Bilibili link; multi-P videos split into lectures."""
+    job = ImportJob(source_url=payload.url, import_type="bilibili_manual", status="running")
+    db.add(job)
+    db.flush()
+    try:
+        course = BilibiliService(db).import_course(payload.url, payload.name)
+        db.add(CertificatePolicy(course_id=course.id, video_coverage_threshold=_threshold(db)))
+        job.course_id, job.status, job.stats = course.id, "completed", {"lectures": len(course.lectures), "manual": True}
+        _commit(db)
+        return {"job_id": job.id, "course": _course_payload(db, course, details=True)}
+    except (BilibiliError, ValueError) as exc:
+        job.status, job.errors = "failed", [str(exc)]
+        _commit(db)
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/dashboard")

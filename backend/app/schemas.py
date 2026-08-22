@@ -49,6 +49,15 @@ class BilibiliLectureSourceUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=500)
 
 
+class BilibiliQrPollRequest(BaseModel):
+    qrcode_key: str = Field(min_length=8, max_length=128)
+
+
+class BilibiliImportRequest(BaseModel):
+    url: str = Field(min_length=12, max_length=1_000)
+    name: str | None = Field(default=None, min_length=1, max_length=300)
+
+
 class WatchSegmentCreate(BaseModel):
     video_id: int
     start_seconds: float = Field(ge=0)

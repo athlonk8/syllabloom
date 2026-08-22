@@ -11,6 +11,7 @@ import type { Assignment, Course, Dashboard, Lecture } from "./types/api";
 
 const PRESETS = [
   { label: "Karpathy - Zero to Hero", type: "youtube", url: "https://www.youtube.com/@AndrejKarpathy/playlists" },
+  { label: "Stanford CS336 (B站)", type: "bilibili", url: "https://www.bilibili.com/video/BV1Ect2zjEHR/" },
   { label: "Stanford CS229", type: "stanford", url: "https://cs229.stanford.edu/" },
   { label: "Stanford CS224N", type: "stanford", url: "https://web.stanford.edu/class/cs224n/" },
   { label: "Stanford CS336", type: "stanford", url: "https://cs336.stanford.edu/" },
@@ -70,7 +71,7 @@ function ImportDialog({
   onImported: (course: Course) => void;
   t: Translator;
 }) {
-  const [mode, setMode] = useState<"youtube" | "stanford" | "manual">("youtube");
+  const [mode, setMode] = useState<"bilibili" | "youtube" | "stanford" | "manual">("bilibili");
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
@@ -78,7 +79,7 @@ function ImportDialog({
   const [error, setError] = useState<string | null>(null);
 
   const usePreset = (preset: (typeof PRESETS)[number]) => {
-    setMode(preset.type as "youtube" | "stanford");
+    setMode(preset.type as "bilibili" | "youtube" | "stanford");
     setUrl(preset.url);
   };
 
@@ -88,7 +89,9 @@ function ImportDialog({
     setError(null);
     try {
       let response: { course: Course };
-      if (mode === "youtube") {
+      if (mode === "bilibili") {
+        response = await api("/imports/manual-bilibili", { method: "POST", body: JSON.stringify({ url, name: name || undefined }) });
+      } else if (mode === "youtube") {
         response = await api("/imports/youtube", { method: "POST", body: JSON.stringify({ url }) });
       } else if (mode === "stanford") {
         response = await api("/imports/stanford", {
@@ -119,21 +122,23 @@ function ImportDialog({
         <h2>{t("import.title")}</h2>
         <p className="muted">{t("import.policy")}</p>
         <div className="segmented">
+          <button type="button" className={mode === "bilibili" ? "selected" : ""} onClick={() => setMode("bilibili")}>{t("import.bilibiliUrl")}</button>
           <button type="button" className={mode === "youtube" ? "selected" : ""} onClick={() => setMode("youtube")}>{t("import.youtubeApi")}</button>
           <button type="button" className={mode === "stanford" ? "selected" : ""} onClick={() => setMode("stanford")}>{t("import.stanfordUrl")}</button>
           <button type="button" className={mode === "manual" ? "selected" : ""} onClick={() => setMode("manual")}>{t("import.manualFallback")}</button>
         </div>
-        {mode === "manual" && (
+        {(mode === "manual" || mode === "bilibili") && (
           <>
-            <label>{t("import.courseName")}<input value={name} onChange={(event) => setName(event.target.value)} required placeholder={t("import.courseNamePlaceholder")} /></label>
-            <label>{t("import.videoTitle")}<input value={videoTitle} onChange={(event) => setVideoTitle(event.target.value)} placeholder={t("import.videoTitlePlaceholder")} /></label>
+            <label>{t("import.courseName")}<input value={name} onChange={(event) => setName(event.target.value)} required={mode === "manual"} placeholder={mode === "bilibili" ? t("import.bilibiliNamePlaceholder") : t("import.courseNamePlaceholder")} /></label>
+            {mode === "manual" && <label>{t("import.videoTitle")}<input value={videoTitle} onChange={(event) => setVideoTitle(event.target.value)} placeholder={t("import.videoTitlePlaceholder")} /></label>}
           </>
         )}
         <label>
-          {mode === "stanford" ? t("import.stanfordCourseUrl") : t("import.youtubeUrl")}
+          {mode === "stanford" ? t("import.stanfordCourseUrl") : mode === "bilibili" ? t("import.bilibiliVideoUrl") : t("import.youtubeUrl")}
           <input value={url} onChange={(event) => setUrl(event.target.value)} required type="url" placeholder="https://…" />
         </label>
         {mode === "youtube" && <p className="hint">{t("import.youtubeHint")}</p>}
+        {mode === "bilibili" && <p className="hint">{t("import.bilibiliHint")}</p>}
         {error && <p className="inline-error">{error}</p>}
         <button className="primary-button" disabled={busy}>{busy ? t("import.importing") : t("import.submit")}</button>
         <div className="preset-list">
@@ -500,7 +505,7 @@ function CourseWorkspace({
         <section className="learning-stage">
           {lecture?.video ? (
             lecture.video.provider === "bilibili"
-              ? <BilibiliPlayer lecture={lecture} locale={locale} courseId={course.id} />
+              ? <BilibiliPlayer lecture={lecture} locale={locale} onProgress={() => void onRefresh()} />
               : <YouTubePlayer lecture={lecture} locale={locale} onProgress={() => void onRefresh()} />
           ) : (
             <div className="empty-player"><h3>{t("course.noPlayer")}</h3><p>{t("course.noPlayerDescription")}</p></div>

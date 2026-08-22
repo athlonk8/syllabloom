@@ -25,6 +25,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "import.library": "Course library",
     "import.title": "Add a course",
     "import.policy": "Import only public materials. Stanford pages are bounded, robots-aware, and never bypass login.",
+    "import.bilibiliUrl": "Bilibili link",
     "import.youtubeApi": "YouTube API",
     "import.stanfordUrl": "Stanford URL",
     "import.manualFallback": "Manual fallback",
@@ -35,6 +36,9 @@ const messages: Record<Locale, Record<string, string>> = {
     "import.stanfordCourseUrl": "Stanford course URL",
     "import.youtubeUrl": "YouTube video or playlist URL",
     "import.youtubeHint": "Uses the official YouTube Data API. Add a local API key in Settings; no HTML scraping fallback is used.",
+    "import.bilibiliVideoUrl": "Bilibili video URL (BV…)",
+    "import.bilibiliHint": "Paste a direct bilibili.com video link. Multi-part (multi-P) videos are split into one lecture per part automatically, and playback uses the built-in player with QR sign-in and quality switching.",
+    "import.bilibiliNamePlaceholder": "Optional — defaults to the Bilibili title",
     "import.importing": "Importing…",
     "import.submit": "Import course",
     "import.presets": "Import presets",
@@ -209,15 +213,23 @@ const messages: Record<Locale, Record<string, string>> = {
     "player.saveError": "Unable to save watch progress.",
     "player.label": "YouTube player: {title}",
     "player.bilibiliLabel": "Bilibili player: {title}",
-    "player.bilibiliReady": "Bilibili player ready",
-    "player.bilibiliNotice": "Third-party source selected by learner",
-    "player.bilibiliHdTitle": "Use your Bilibili account for available quality options",
-    "player.bilibiliHdHint": "Sign in directly with Bilibili, then refresh this player and choose the quality Bilibili makes available for this video.",
-    "player.bilibiliLoginRefreshHint": "Finish sign-in in the Bilibili tab, then use Refresh player. Syllabloom never receives your Bilibili password or cookies.",
-    "player.bilibiliLogin": "Sign in to Bilibili",
-    "player.bilibiliRefresh": "Refresh player",
-    "player.fullscreen": "Full screen",
-    "player.exitFullscreen": "Exit full screen",
+    "player.bilibiliQuality": "Quality",
+    "player.bilibiliQualityLoading": "Loading quality…",
+    "player.bilibiliQualityHint": "Scan the sign-in code to unlock the qualities your Bilibili account is entitled to; anonymous playback tops out around 480P.",
+    "player.bilibiliSignedInHint": "Playback uses your signed-in Bilibili entitlements. Pick a quality from the menu.",
+    "player.bilibiliLoggedInAs": "Signed in: {name}",
+    "player.bilibiliLogin": "Scan to sign in",
+    "player.bilibiliLogout": "Sign out",
+    "player.bilibiliLoginTitle": "Sign in to Bilibili",
+    "player.bilibiliLoginHint": "Open the Bilibili app on your phone and scan this code. The session is stored only in your local Syllabloom database and is never displayed or uploaded.",
+    "player.bilibiliQrLoading": "Loading QR code…",
+    "player.bilibiliQrWaiting": "Waiting for scan…",
+    "player.bilibiliQrScanned": "Scanned — confirm on your phone…",
+    "player.bilibiliQrExpired": "The code expired.",
+    "player.bilibiliQrError": "Could not reach Bilibili's login service.",
+    "player.bilibiliQrRefresh": "Generate a new code",
+    "player.bilibiliClose": "Close",
+    "player.bilibiliLoadError": "Bilibili playback could not be loaded.",
   },
   zh: {
     "app.title": "Syllabloom — 本地学习工作台",
@@ -239,6 +251,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "import.library": "课程库",
     "import.title": "添加课程",
     "import.policy": "仅导入公开资料。Stanford 页面抓取有边界、遵守 robots 规则，且绝不会绕过登录。",
+    "import.bilibiliUrl": "B 站链接",
     "import.youtubeApi": "YouTube API",
     "import.stanfordUrl": "Stanford URL",
     "import.manualFallback": "手动导入",
@@ -249,6 +262,9 @@ const messages: Record<Locale, Record<string, string>> = {
     "import.stanfordCourseUrl": "Stanford 课程网址",
     "import.youtubeUrl": "YouTube 视频或播放列表网址",
     "import.youtubeHint": "使用官方 YouTube Data API。请在设置中填写本地 API 密钥；不会使用抓取网页 HTML 的备用方案。",
+    "import.bilibiliVideoUrl": "B 站视频网址（BV…）",
+    "import.bilibiliHint": "粘贴直接的 bilibili.com 视频链接。多 P 视频会自动拆分为多个讲次；播放使用内置播放器，支持扫码登录与清晰度切换。",
+    "import.bilibiliNamePlaceholder": "可选——默认使用 B 站标题",
     "import.importing": "正在导入…",
     "import.submit": "导入课程",
     "import.presets": "快捷导入",
@@ -373,7 +389,6 @@ const messages: Record<Locale, Record<string, string>> = {
     "player.saveError": "无法保存观看进度。",
     "player.label": "YouTube 播放器：{title}",
     "player.bilibiliLabel": "B 站播放器：{title}",
-    "player.bilibiliReady": "B 站播放器已就绪",
     "player.bilibiliNotice": "学习者选择的第三方来源",
   },
 };
@@ -432,33 +447,23 @@ Object.assign(messages.zh, {
   "assignment.gradeReady": "反馈已显示在本地工作区。",
   "assignment.open": "打开作业工作区",
   "assignment.status.in_progress": "进行中",
-  "player.bilibiliHdTitle": "使用你的 B 站账号获取可用清晰度选项",
-  "player.bilibiliHdHint": "直接登录 B 站后刷新播放器，并在 B 站提供的范围内选择该视频可用的清晰度。",
-  "player.bilibiliLoginRefreshHint": "请在 B 站标签页完成登录后点击“刷新播放器”。Syllabloom 不会接收你的密码或 Cookie。",
-  "player.bilibiliLogin": "登录 B 站",
-  "player.bilibiliRefresh": "刷新播放器",
-  "player.fullscreen": "全屏",
-  "player.exitFullscreen": "退出全屏",
-});
-
-Object.assign(messages.en, {
-  "player.bilibiliHdTitle": "Keep Bilibili playback in this page",
-  "player.bilibiliHdHint": "Sign in with Bilibili in this tab. When sign-in finishes, Bilibili returns to this exact course and Syllabloom reloads the embedded player. Bilibili decides which qualities its external player will actually serve.",
-  "player.bilibiliReturnDetected": "Bilibili sign-in return detected — the in-page player has been reloaded.",
-  "player.bilibiliLogin": "Sign in and return to player",
-  "player.bilibiliRefresh": "Reload in-page player",
-  "player.bilibiliInPageOnly": "External Bilibili playback is disabled here.",
-  "player.fullscreenUnavailable": "Full screen was blocked by this browser",
-});
-
-Object.assign(messages.zh, {
-  "player.bilibiliHdTitle": "始终在本页面播放 B 站视频",
-  "player.bilibiliHdHint": "在当前标签页登录 B 站。登录完成后会自动回到当前课程，Syllabloom 会重新加载页面内播放器。B 站决定其外链播放器实际提供哪些清晰度。",
-  "player.bilibiliReturnDetected": "已检测到 B 站登录回跳，页面内播放器已重新加载。",
-  "player.bilibiliLogin": "登录后返回播放器",
-  "player.bilibiliRefresh": "重新加载页面内播放器",
-  "player.bilibiliInPageOnly": "此处已禁用跳转到 B 站站外播放。",
-  "player.fullscreenUnavailable": "当前浏览器阻止了全屏",
+  "player.bilibiliQuality": "清晰度",
+  "player.bilibiliQualityLoading": "清晰度加载中…",
+  "player.bilibiliQualityHint": "扫码登录 B 站即可解锁你账号有权观看的清晰度；未登录最高约 480P。",
+  "player.bilibiliSignedInHint": "播放使用你已登录的 B 站账号权限，可在菜单中切换清晰度。",
+  "player.bilibiliLoggedInAs": "已登录：{name}",
+  "player.bilibiliLogin": "扫码登录",
+  "player.bilibiliLogout": "退出登录",
+  "player.bilibiliLoginTitle": "登录 B 站",
+  "player.bilibiliLoginHint": "用手机 B 站客户端扫描二维码。登录凭据仅保存在本机 Syllabloom 数据库中，不会展示或上传。",
+  "player.bilibiliQrLoading": "正在加载二维码…",
+  "player.bilibiliQrWaiting": "等待扫码…",
+  "player.bilibiliQrScanned": "已扫码——请在手机上确认…",
+  "player.bilibiliQrExpired": "二维码已过期。",
+  "player.bilibiliQrError": "无法连接 B 站登录服务。",
+  "player.bilibiliQrRefresh": "重新生成二维码",
+  "player.bilibiliClose": "关闭",
+  "player.bilibiliLoadError": "B 站视频加载失败。",
 });
 
 export function translate(locale: Locale, key: string, values: TranslationValues = {}): string {
@@ -481,10 +486,6 @@ export function detectLocale(): Locale {
 
 export function localeLink(locale: Locale): string {
   const url = new URL(window.location.href);
-  // These parameters are a one-time Bilibili sign-in handoff. Never retain
-  // them in language links that are rendered during the return transition.
-  url.searchParams.delete("bilibili_login");
-  url.searchParams.delete("bilibili_lecture");
   url.searchParams.set("lang", locale);
   return url.pathname + url.search + url.hash;
 }
